@@ -10,11 +10,12 @@ import Toast from 'react-native-toast-message'
 import { signupSchema, SignupInput } from '../../src/lib/validation/auth'
 import { signupUser } from '../../src/api/auth'
 import { useAuthStore } from '../../src/store/useAuthStore'
+import { useTheme } from '../../src/theme/ThemeContext'
 
 export default function SignupScreen() {
   const router = useRouter()
   const setAuth = useAuthStore((state) => state.setAuth)
-
+  const {theme}=useTheme();
   const { control, handleSubmit, formState: { errors, isSubmitting, isValid } } =
     useForm<SignupInput>({ resolver: zodResolver(signupSchema), mode: 'onChange' })
 
@@ -35,6 +36,7 @@ export default function SignupScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
+       style={{ backgroundColor: theme.background }}
         contentContainerClassName="flex-grow justify-center p-6"
         keyboardShouldPersistTaps="handled"
       >

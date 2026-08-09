@@ -10,12 +10,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#FFF9F6",
+        background: "#FFF5F8",
         card: "#FFFFFF",
-        border: "#F0E4DE",
-        primary: "#C97B63",
-        foreground: "#2B2320",
-        muted: "#8A7A72",
+        border: "#FADCE6",
+        primary: "#EC5B8C",
+        "primary-light": "#FCE4EC",
+        accent: "#FFB6C9",
+        foreground: "#3D2430",
+        muted: "#9C7D8A",
       },
     },
   },

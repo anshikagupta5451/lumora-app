@@ -1,11 +1,10 @@
-// src/store/useAuthStore.ts
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 const storage = {
   async getItem(key: string) {
-    if (Platform.OS === "web") return null; // or read from localStorage if you want web support later
+    if (Platform.OS === "web") return null; 
     return SecureStore.getItemAsync(key);
   },
   async setItem(key: string, value: string) {
@@ -35,9 +34,10 @@ interface AuthState {
   ) => Promise<void>;
   logout: () => Promise<void>;
   loadAuth: () => Promise<void>;
+  updateUser: (updates: Partial<{ name: string }>) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
   isAuthenticated: false,
@@ -61,5 +61,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     const userStr = await storage.getItem("user");
     if (accessToken && userStr)
       set({ accessToken, user: JSON.parse(userStr), isAuthenticated: true });
+  },
+
+  updateUser: async (updates) => {
+    const current = get().user;
+    if (!current) return;
+    const updated = { ...current, ...updates };
+    await storage.setItem("user", JSON.stringify(updated));
+    set({ user: updated });
   },
 }));

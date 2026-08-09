@@ -1,80 +1,150 @@
-import React from 'react'
+import React from "react";
 import {
-  View, Text, TextInput, Pressable,
-  KeyboardAvoidingView, Platform, ScrollView,
-} from 'react-native'
-import { Link, useRouter } from 'expo-router'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import Toast from 'react-native-toast-message'
-import { loginSchema, LoginInput } from '../../src/lib/validation/auth'
-import { loginUser } from '../../src/api/auth'
-import { useAuthStore } from '../../src/store/useAuthStore'
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
+import { Link, useRouter } from "expo-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Toast from "react-native-toast-message";
+import { loginSchema, LoginInput } from "../../src/lib/validation/auth";
+import { loginUser } from "../../src/api/auth";
+import { useAuthStore } from "../../src/store/useAuthStore";
+import { useTheme } from "../../src/theme/ThemeContext";
 
 export default function LoginScreen() {
-  const router = useRouter()
-  const setAuth = useAuthStore((state) => state.setAuth)
+  const router = useRouter();
+  const { theme } = useTheme();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
-  const { control, handleSubmit, formState: { errors, isSubmitting, isValid } } =
-    useForm<LoginInput>({ resolver: zodResolver(loginSchema), mode: 'onChange' })
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+  });
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      const response = await loginUser(data)
-      await setAuth(response.user, response.accessToken, response.refreshToken)
-      Toast.show({ type: 'success', text1: 'Welcome back!' })
-      router.replace('/(main)/(tabs)/home')
+      const response = await loginUser(data);
+      await setAuth(response.user, response.accessToken, response.refreshToken);
+      Toast.show({ type: "success", text1: "Welcome back!" });
+      router.replace("/(main)/(tabs)/home");
     } catch (err: any) {
-      Toast.show({ type: 'error', text1: err.message || 'Invalid email or password' })
+      Toast.show({
+        type: "error",
+        text1: err.message || "Invalid email or password",
+      });
     }
-  }
+  };
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1, backgroundColor: theme.background }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerClassName="flex-grow justify-center p-6"
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          padding: 24,
+        }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Badge */}
-        <View className="flex-row items-center self-center bg-card border border-border rounded-full px-3 py-1.5 mb-4">
-          <View className="w-1.5 h-1.5 rounded-full bg-primary mr-2" />
-          <Text className="text-xs text-muted">Lumora • AI Beauty Companion</Text>
+        <View
+          className="flex-row items-center self-center rounded-full px-3 py-1.5 mb-4"
+          style={{
+            backgroundColor: theme.card,
+            borderWidth: 1,
+            borderColor: theme.border,
+          }}
+        >
+          <View
+            className="w-1.5 h-1.5 rounded-full mr-2"
+            style={{ backgroundColor: theme.primary }}
+          />
+          <Text className="text-xs" style={{ color: theme.muted }}>
+            Lumora • AI Beauty Companion
+          </Text>
         </View>
 
-        <Text className="text-2xl font-bold text-foreground text-center">
+        <Text
+          className="text-2xl font-bold text-center"
+          style={{ color: theme.foreground }}
+        >
           Welcome back
         </Text>
-        <Text className="text-sm text-muted text-center mt-1 mb-6">
+        <Text
+          className="text-sm text-center mt-1 mb-6"
+          style={{ color: theme.muted }}
+        >
           Log in to see your personalized routine.
         </Text>
 
-        {/* Card */}
-        <View className="bg-card rounded-2xl border border-border p-5">
+        <View
+          className="rounded-2xl p-5"
+          style={{
+            backgroundColor: theme.card,
+            borderWidth: 1,
+            borderColor: theme.border,
+          }}
+        >
           <Pressable
-            className="border border-border rounded-xl py-3 items-center mb-4"
-            onPress={() => Toast.show({ type: 'info', text1: 'Google login coming soon!' })}
+            className="rounded-xl py-3 items-center mb-4"
+            style={{ borderWidth: 1, borderColor: theme.border }}
+            onPress={() =>
+              Toast.show({ type: "info", text1: "Google login coming soon!" })
+            }
           >
-            <Text className="text-sm font-medium text-foreground">G   Continue with Google</Text>
+            <Text
+              className="text-sm font-medium"
+              style={{ color: theme.foreground }}
+            >
+              G Continue with Google
+            </Text>
           </Pressable>
 
           <View className="flex-row items-center mb-4">
-            <View className="flex-1 h-px bg-border" />
-            <Text className="mx-2.5 text-xs text-muted">or</Text>
-            <View className="flex-1 h-px bg-border" />
+            <View
+              className="flex-1 h-px"
+              style={{ backgroundColor: theme.border }}
+            />
+            <Text className="mx-2.5 text-xs" style={{ color: theme.muted }}>
+              or
+            </Text>
+            <View
+              className="flex-1 h-px"
+              style={{ backgroundColor: theme.border }}
+            />
           </View>
 
-          <Text className="text-sm font-medium text-foreground mb-1.5">Email</Text>
+          <Text
+            className="text-sm font-medium mb-1.5"
+            style={{ color: theme.foreground }}
+          >
+            Email
+          </Text>
           <Controller
             control={control}
             name="email"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
-                className="border border-border rounded-xl px-3.5 py-3 text-[15px] text-foreground bg-white"
+                className="rounded-xl px-3.5 py-3 text-[15px]"
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  backgroundColor: theme.background,
+                  color: theme.foreground,
+                }}
                 placeholder="you@example.com"
-                placeholderTextColor="#8A7A72"
+                placeholderTextColor={theme.muted}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 onBlur={onBlur}
@@ -84,18 +154,34 @@ export default function LoginScreen() {
             )}
           />
           {errors.email && (
-            <Text className="text-red-500 text-[11px] mt-1 ml-0.5">{errors.email.message}</Text>
+            <Text
+              className="text-[11px] mt-1 ml-0.5"
+              style={{ color: "#EF4444" }}
+            >
+              {errors.email.message}
+            </Text>
           )}
 
-          <Text className="text-sm font-medium text-foreground mb-1.5 mt-3.5">Password</Text>
+          <Text
+            className="text-sm font-medium mb-1.5 mt-3.5"
+            style={{ color: theme.foreground }}
+          >
+            Password
+          </Text>
           <Controller
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
-                className="border border-border rounded-xl px-3.5 py-3 text-[15px] text-foreground bg-white"
+                className="rounded-xl px-3.5 py-3 text-[15px]"
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  backgroundColor: theme.background,
+                  color: theme.foreground,
+                }}
                 placeholder="••••••••"
-                placeholderTextColor="#8A7A72"
+                placeholderTextColor={theme.muted}
                 secureTextEntry
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -104,33 +190,54 @@ export default function LoginScreen() {
             )}
           />
           {errors.password && (
-            <Text className="text-red-500 text-[11px] mt-1 ml-0.5">{errors.password.message}</Text>
+            <Text
+              className="text-[11px] mt-1 ml-0.5"
+              style={{ color: "#EF4444" }}
+            >
+              {errors.password.message}
+            </Text>
           )}
 
           <Pressable
-            className={`rounded-xl py-3.5 items-center mt-6 ${(!isValid || isSubmitting) ? 'bg-primary/50' : 'bg-primary'}`}
+            className="rounded-xl py-3.5 items-center mt-6"
+            style={{
+              backgroundColor:
+                !isValid || isSubmitting ? theme.primaryLight : theme.primary,
+            }}
             onPress={handleSubmit(onSubmit)}
             disabled={!isValid || isSubmitting}
           >
             <Text className="text-white text-[15px] font-semibold">
-              {isSubmitting ? 'Logging in...' : 'Log in'}
+              {isSubmitting ? "Logging in..." : "Log in"}
             </Text>
           </Pressable>
 
           <View className="flex-row justify-between mt-5">
-            <Link href="/(auth)/signup" className="text-primary font-medium text-[13px]">
+            <Link
+              href="/(auth)/signup"
+              style={{ color: theme.primary, fontWeight: "500", fontSize: 13 }}
+            >
               Create an account
             </Link>
-            <Pressable onPress={() => Toast.show({ type: 'info', text1: 'Feature coming soon!' })}>
-              <Text className="text-muted text-[13px]">Forgot password?</Text>
+            <Pressable
+              onPress={() =>
+                Toast.show({ type: "info", text1: "Feature coming soon!" })
+              }
+            >
+              <Text className="text-[13px]" style={{ color: theme.muted }}>
+                Forgot password?
+              </Text>
             </Pressable>
           </View>
 
-          <Text className="text-[10px] text-muted text-center mt-5 leading-4">
+          <Text
+            className="text-[10px] text-center mt-5 leading-4"
+            style={{ color: theme.muted }}
+          >
             By continuing, you agree to our Terms & Privacy Policy.
           </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  )
+  );
 }

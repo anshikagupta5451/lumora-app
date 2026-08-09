@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "485887674799",
+    "project_id": "lumora-305bd",
+    "storage_bucket": "lumora-305bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485887674799:android:b9a3cfcd82e66126ba075a",
+        "android_client_info": {
+          "package_name": "com.anonymous.lumoraapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMHQIu19R7aItDV9vyhfH7nrCZgvcr94c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

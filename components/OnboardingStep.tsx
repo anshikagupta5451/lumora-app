@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../src/theme/ThemeContext";
 
 interface Props {
   step: number;
@@ -24,9 +26,13 @@ export function OnboardingStep({
   nextLabel = "Continue",
 }: Props) {
   const router = useRouter();
-
+  const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   return (
-    <View className="flex-1 bg-background p-6">
+    <View
+      className="flex-1 bg-background p-6"
+      style={{ paddingBottom: insets.bottom + 16 }}
+    >
       <View className="flex-row gap-1.5 mb-6 mt-2">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <View
@@ -39,7 +45,11 @@ export function OnboardingStep({
       <Text className="text-2xl font-bold text-foreground">{title}</Text>
       <Text className="text-sm text-muted mt-1 mb-6">{subtitle}</Text>
 
-      <ScrollView className="flex-1" contentContainerClassName="gap-3">
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="gap-3"
+        style={{ backgroundColor: theme.background }}
+      >
         {children}
       </ScrollView>
 

@@ -1,7 +1,7 @@
-import React from "react";
-import { View, Text, Pressable } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { LogOut, User as UserIcon } from "lucide-react-native";
+import React from "react";
+import { Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "../src/store/useAuthStore";
 import { Button } from "./ui/Button";
@@ -52,7 +52,7 @@ export function SiteHeader() {
                     {getInitials(user.name)}
                   </Text>
                 ) : (
-                  <UserIcon size={14} color="#C97B63" />
+                  <UserIcon size={14} color="#E8896F" />
                 )}
               </View>
             </Pressable>

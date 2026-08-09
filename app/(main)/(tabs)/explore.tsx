@@ -1,18 +1,27 @@
-import React, { useEffect, useState, useMemo } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  Pressable,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  X,
+  PenSquare,
+} from "lucide-react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
   ActivityIndicator,
   Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import { Search, SlidersHorizontal, Sparkles, X } from "lucide-react-native";
-import { getReviews, Review } from "../../../src/api/reviews";
-import { ReviewCard } from "../../../components/ReviewCard";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { FilterChip } from "../../../components/FilterChip";
+import { ReviewCard } from "../../../components/ReviewCard";
 import { Card } from "../../../components/ui/Card";
+import { getReviews, Review } from "../../../src/api/reviews";
+import { useTheme } from "../../../src/theme/ThemeContext";
 
 const skinOptions = ["Oily", "Dry", "Normal", "Combo", "Sensitive"];
 const concernOptions = [
@@ -32,6 +41,10 @@ const sortOptions = [
 ];
 
 export default function ExploreScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -45,10 +58,7 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     getReviews()
-      .then((data) => {
-        console.log("Fetched reviews:", JSON.stringify(data, null, 2)); // TEMP debug — remove once confirmed
-        setReviews(data);
-      })
+      .then((data) => setReviews(data))
       .catch((e) => setFetchError(e.message || "Failed to load reviews"))
       .finally(() => setLoading(false));
   }, []);
@@ -106,28 +116,91 @@ export default function ExploreScreen() {
     (selectedRating ? 1 : 0) + selectedSkin.length + selectedConcerns.length;
 
   return (
-    <View className="flex-1 bg-background">
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: theme.background,
+        paddingTop: insets.top,
+      }}
+    >
       {/* Header */}
       <View className="px-4 pt-4 pb-3">
-        <View className="flex-row items-center gap-1.5 self-start bg-primary/10 border border-primary/25 rounded-full px-3 py-1 mb-2">
-          <Sparkles size={12} color="#C97B63" />
-          <Text className="text-[10px] font-semibold text-primary uppercase tracking-wide">
+        <View
+          className="flex-row items-center gap-1.5 self-start rounded-full px-3 py-1 mb-2"
+          style={{
+            backgroundColor: theme.primaryLight,
+            borderWidth: 1,
+            borderColor: theme.border,
+          }}
+        >
+          <Sparkles size={12} color={theme.primary} />
+          <Text
+            className="text-[10px] font-semibold uppercase tracking-wide"
+            style={{ color: theme.primary }}
+          >
             Community Reviews
           </Text>
         </View>
-        <Text className="text-2xl font-bold text-foreground">
-          View <Text className="text-primary">Reviews</Text>
+        <Text
+          className="text-2xl font-bold"
+          style={{ color: theme.foreground }}
+        >
+          View <Text style={{ color: theme.primary }}>Reviews</Text>
         </Text>
-        <Text className="text-sm text-muted-foreground mt-1">
+        <Text className="text-sm mt-1" style={{ color: theme.muted }}>
           Real skincare experiences from the community.
         </Text>
 
-        {/* Single, meaningful stat — dropped the mixed-product avg rating */}
-        <Card className="items-center py-3 mt-4">
-          <Text className="text-[10px] text-muted-foreground uppercase">
+        <Pressable
+          onPress={() => router.push("/(main)/glossary")}
+          className="flex-row items-center gap-1.5 self-start mt-2"
+        >
+          <Text
+            className="text-xs font-medium underline"
+            style={{ color: theme.primary }}
+          >
+            📖 Ingredient Glossary
+          </Text>
+        </Pressable>
+
+        {/* <Pressable
+          onPress={() => router.push("/(main)/shared-routines")}
+          className="flex-row items-center gap-1.5 self-start mt-2"
+        >
+          <Text
+            className="text-xs font-medium underline"
+            style={{ color: theme.primary }}
+          >
+            🔁 Shared Routines
+          </Text>
+        </Pressable> */}
+
+        <Pressable
+          onPress={() => router.push("/(main)/share-review")}
+          className="flex-row items-center gap-1.5 rounded-full px-3.5 py-2 self-start mt-3"
+          style={{ backgroundColor: theme.primary }}
+        >
+          <PenSquare size={14} color="#fff" />
+          <Text className="text-xs font-semibold text-white">
+            Write a review
+          </Text>
+        </Pressable>
+
+        {/* Single, meaningful stat */}
+        <Card
+          className="items-center py-3 mt-4"
+          style={{ backgroundColor: theme.card, borderColor: theme.border }}
+        >
+          <Text
+            className="text-[10px] uppercase"
+            style={{ color: theme.muted }}
+          >
             Total Reviews
           </Text>
-          <Text className="text-lg font-semibold text-foreground mt-0.5">
+          <Text
+            className="text-lg font-semibold mt-0.5"
+            style={{ color: theme.foreground }}
+          >
             {filtered.length}
           </Text>
         </Card>
@@ -135,23 +208,39 @@ export default function ExploreScreen() {
 
       {/* Search + filter button */}
       <View className="px-4 flex-row gap-2 mb-2">
-        <View className="flex-1 flex-row items-center bg-card border border-border rounded-xl px-3 py-2.5">
-          <Search size={16} color="#8A7A72" />
+        <View
+          className="flex-1 flex-row items-center rounded-xl px-3 py-2.5"
+          style={{
+            backgroundColor: theme.card,
+            borderWidth: 1,
+            borderColor: theme.border,
+          }}
+        >
+          <Search size={16} color={theme.muted} />
           <TextInput
-            className="flex-1 ml-2 text-sm text-foreground"
+            className="flex-1 ml-2 text-sm"
+            style={{ color: theme.foreground }}
             placeholder="Search products or reviews"
-            placeholderTextColor="#8A7A72"
+            placeholderTextColor={theme.muted}
             value={search}
             onChangeText={setSearch}
           />
         </View>
         <Pressable
           onPress={() => setFiltersOpen(true)}
-          className="flex-row items-center gap-1.5 bg-card border border-border rounded-xl px-3.5"
+          className="flex-row items-center gap-1.5 rounded-xl px-3.5"
+          style={{
+            backgroundColor: theme.card,
+            borderWidth: 1,
+            borderColor: theme.border,
+          }}
         >
-          <SlidersHorizontal size={16} color="#C97B63" />
+          <SlidersHorizontal size={16} color={theme.primary} />
           {activeFilterCount > 0 && (
-            <View className="bg-primary rounded-full w-4 h-4 items-center justify-center">
+            <View
+              className="rounded-full w-4 h-4 items-center justify-center"
+              style={{ backgroundColor: theme.primary }}
+            >
               <Text className="text-white text-[9px] font-bold">
                 {activeFilterCount}
               </Text>
@@ -163,6 +252,7 @@ export default function ExploreScreen() {
       {/* Sort row */}
       <View style={{ height: 44 }}>
         <ScrollView
+          style={{ backgroundColor: theme.background }}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{
@@ -185,30 +275,40 @@ export default function ExploreScreen() {
       {/* Results */}
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#C97B63" />
+          <ActivityIndicator color={theme.primary} />
         </View>
       ) : fetchError ? (
         <View className="flex-1 items-center justify-center p-6">
-          <Text className="text-foreground font-semibold">
+          <Text className="font-semibold" style={{ color: theme.foreground }}>
             Failed to load reviews
           </Text>
-          <Text className="text-muted-foreground text-sm mt-1 text-center">
+          <Text
+            className="text-sm mt-1 text-center"
+            style={{ color: theme.muted }}
+          >
             {fetchError}
           </Text>
         </View>
       ) : filtered.length === 0 ? (
         <View className="flex-1 items-center justify-center p-6">
-          <Text className="text-foreground font-semibold">
+          <Text className="font-semibold" style={{ color: theme.foreground }}>
             No reviews found
           </Text>
-          <Text className="text-muted-foreground text-sm mt-1 text-center">
+          <Text
+            className="text-sm mt-1 text-center"
+            style={{ color: theme.muted }}
+          >
             Try changing your filters or search term.
           </Text>
         </View>
       ) : (
         <ScrollView
           className="flex-1 px-4"
-          contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
+          style={{ backgroundColor: theme.background }}
+          contentContainerStyle={{
+            paddingTop: 8,
+            paddingBottom: insets.bottom + 24,
+          }}
         >
           {filtered.map((review) => (
             <ReviewCard key={review.id} review={review} />
@@ -223,19 +323,34 @@ export default function ExploreScreen() {
         transparent
         onRequestClose={() => setFiltersOpen(false)}
       >
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-background rounded-t-3xl p-5 max-h-[80%]">
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+        >
+          <View
+            className="rounded-t-3xl p-5 max-h-[80%]"
+            style={{
+              backgroundColor: theme.background,
+              paddingBottom: insets.bottom + 16,
+            }}
+          >
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-base font-semibold text-foreground">
+              <Text
+                className="text-base font-semibold"
+                style={{ color: theme.foreground }}
+              >
                 Filters
               </Text>
               <Pressable onPress={() => setFiltersOpen(false)}>
-                <X size={20} color="#8A7A72" />
+                <X size={20} color={theme.muted} />
               </Pressable>
             </View>
 
             <ScrollView>
-              <Text className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+              <Text
+                className="text-xs font-semibold uppercase mb-2"
+                style={{ color: theme.muted }}
+              >
                 Rating
               </Text>
               <View className="flex-row flex-wrap gap-2 mb-5">
@@ -251,7 +366,10 @@ export default function ExploreScreen() {
                 ))}
               </View>
 
-              <Text className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+              <Text
+                className="text-xs font-semibold uppercase mb-2"
+                style={{ color: theme.muted }}
+              >
                 Skin Type
               </Text>
               <View className="flex-row flex-wrap gap-2 mb-5">
@@ -265,7 +383,10 @@ export default function ExploreScreen() {
                 ))}
               </View>
 
-              <Text className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+              <Text
+                className="text-xs font-semibold uppercase mb-2"
+                style={{ color: theme.muted }}
+              >
                 Concerns
               </Text>
               <View className="flex-row flex-wrap gap-2 mb-5">
@@ -283,15 +404,20 @@ export default function ExploreScreen() {
 
               <Pressable
                 onPress={resetFilters}
-                className="border border-border rounded-xl py-3 items-center mb-2"
+                className="rounded-xl py-3 items-center mb-2"
+                style={{ borderWidth: 1, borderColor: theme.border }}
               >
-                <Text className="text-foreground font-medium text-sm">
+                <Text
+                  className="font-medium text-sm"
+                  style={{ color: theme.foreground }}
+                >
                   Reset Filters
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => setFiltersOpen(false)}
-                className="bg-primary rounded-xl py-3 items-center"
+                className="rounded-xl py-3 items-center"
+                style={{ backgroundColor: theme.primary }}
               >
                 <Text className="text-white font-medium text-sm">
                   Show {filtered.length} Results
