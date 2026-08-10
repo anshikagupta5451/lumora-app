@@ -1,12 +1,13 @@
 import { apiFetch } from "./client";
 
 export interface RecommendationResponse {
-  id: string;
-  productId: string;
-  productName: string;
-  brand: string;
-  reason: string;
-  generatedAt: string;
+  id: string
+  productId: string
+  productName: string
+  brand: string
+  reason: string
+  generatedAt: string
+  weatherUsed: { temp: number; condition: string; humidity: number } | null
 }
 
 export function getLatestRecommendation() {

@@ -3,9 +3,11 @@ import { Compass, Sparkles, User, Users, Plus } from "lucide-react-native";
 import React, { useState } from "react";
 import { View, Pressable, Text, Modal } from "react-native";
 import { useTheme } from "../../../src/theme/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function QuickActionSheet({ visible, onClose, theme }: any) {
   const router = useRouter();
+
   const actions = [
     { label: "Create routine", route: "/(main)/routine-builder" },
     { label: "Add product", route: "/(main)/add-my-product" },
@@ -61,6 +63,7 @@ function QuickActionSheet({ visible, onClose, theme }: any) {
 export default function TabsLayout() {
   const { theme } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   return (
     <>
@@ -72,8 +75,14 @@ export default function TabsLayout() {
           tabBarStyle: {
             borderTopColor: theme.border,
             backgroundColor: theme.card,
-            height: 60,
-            paddingBottom: 8,
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom + 8,
+            paddingTop: 8,
+          },
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: "600",
+            marginTop: 2,
           },
         }}
       >
@@ -86,7 +95,7 @@ export default function TabsLayout() {
             ),
           }}
         />
-
+     
         <Tabs.Screen
           name="explore"
           options={{
@@ -97,7 +106,7 @@ export default function TabsLayout() {
           }}
         />
 
-        <Tabs.Screen
+           <Tabs.Screen
           name="add-action"
           options={{
             title: "",
@@ -133,7 +142,6 @@ export default function TabsLayout() {
             ),
           }}
         />
-
         <Tabs.Screen
           name="community"
           options={{
@@ -152,14 +160,12 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
-  name="routine"
-  options={{
-    href: null, // hides from tab bar, but route still works
-  }}
-/>
+          name="routine"
+          options={{
+            href: null, // hides from tab bar, but route still works
+          }}
+        />
       </Tabs>
-
-      
 
       <QuickActionSheet
         visible={sheetOpen}

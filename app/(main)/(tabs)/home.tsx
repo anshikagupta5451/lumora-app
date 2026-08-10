@@ -149,10 +149,24 @@ export default function HomeScreen() {
       >
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-white/80 text-xs">
+            <Text
+              style={{
+                color: "rgba(255,255,255,0.85)",
+                fontSize: 14,
+                fontWeight: "600",
+              }}
+            >
               Good morning{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
             </Text>
-            <Text className="text-white text-2xl font-bold mt-1">
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 30,
+                fontWeight: "900",
+                lineHeight: 34,
+                marginTop: 4,
+              }}
+            >
               Your AI Beauty Brief
             </Text>
           </View>
@@ -308,6 +322,13 @@ export default function HomeScreen() {
             >
               {recommendation.reason}
             </Text>
+
+            {recommendation.weatherUsed && (
+              <Text className="text-[10px] mt-2" style={{ color: theme.muted }}>
+                Generated using {recommendation.weatherUsed.temp}°C,{" "}
+                {recommendation.weatherUsed.humidity}% humidity
+              </Text>
+            )}
 
             {feedbackGiven ? (
               <View

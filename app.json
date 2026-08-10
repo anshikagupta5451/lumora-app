@@ -12,7 +12,12 @@
       "supportsTablet": true
     },
     "android": {
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -43,7 +48,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -55,6 +61,12 @@
         "projectId": "09385b08-78a5-4594-ae30-dff71b257f82"
       }
     },
-    "owner": "anshikagupta5451s-team"
+    "owner": "anshikagupta5451s-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/09385b08-78a5-4594-ae30-dff71b257f82"
+    }
   }
 }
