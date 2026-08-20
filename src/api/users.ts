@@ -6,6 +6,18 @@ export interface UserProfile {
   email: string;
 }
 
+export interface PublicProfile {
+  id: string
+  name: string
+  memberSince: string
+  postCount: number
+  reviewCount: number
+}
+
+export function getPublicProfile(id: string) {
+  return apiFetch<PublicProfile>(`/users/${id}/public`)
+}
+
 export function updateMyProfile(name: string) {
   return apiFetch<UserProfile>("/users/me", {
     method: "PATCH",

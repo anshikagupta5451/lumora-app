@@ -9,16 +9,26 @@ import {
   Modal,
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Heart, Users, PenSquare, MessageCircle, X } from "lucide-react-native";
+import {
+  Heart,
+  Users,
+  PenSquare,
+  MessageCircle,
+  X,
+  Sparkles,
+} from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Card } from "../../../components/ui/Card";
 import { CategoryPill } from "../../../components/CategoryPill";
+import { ImagePickerRow } from "../../../components/ImagePickerRow";
+import { PostImageGallery } from "../../../components/PhotoImageGallary";
 import { useTheme } from "../../../src/theme/ThemeContext";
 import {
   getPosts,
   createPost,
   toggleLikePost,
+  uploadPostImages,
   Post,
 } from "../../../src/api/posts";
 import { Avatar } from "@/components/Avatar";
@@ -40,6 +50,47 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d`;
 }
 
+// Small pill used for like / comment counts in the engagement row.
+function StatPill({
+  icon,
+  count,
+  active,
+  onPress,
+  theme,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  active?: boolean;
+  onPress?: () => void;
+  theme: any;
+}) {
+  const content = (
+    <View
+      className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1.5"
+      style={{
+        backgroundColor: active ? theme.primaryLight : theme.background,
+        borderWidth: 1,
+        borderColor: active ? theme.primaryLight : theme.border,
+      }}
+    >
+      {icon}
+      <Text
+        className="text-xs font-semibold"
+        style={{ color: active ? theme.primary : theme.muted }}
+      >
+        {count}
+      </Text>
+    </View>
+  );
+  return onPress ? (
+    <Pressable onPress={onPress} hitSlop={8}>
+      {content}
+    </Pressable>
+  ) : (
+    content
+  );
+}
+
 export default function CommunityScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -52,7 +103,9 @@ export default function CommunityScreen() {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("General");
+  const [imageUris, setImageUris] = useState<string[]>([]);
   const [posting, setPosting] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,20 +124,34 @@ export default function CommunityScreen() {
     }, [load]),
   );
 
+  const resetComposer = () => {
+    setText("");
+    setTitle("");
+    setImageUris([]);
+    setComposing(false);
+  };
+
   const handlePost = async () => {
     if (!text.trim()) return;
     setPosting(true);
     try {
+      let uploadedUrls: string[] = [];
+      if (imageUris.length > 0) {
+        setUploadingImages(true);
+        uploadedUrls = await uploadPostImages(imageUris);
+        setUploadingImages(false);
+      }
+
       await createPost({
         title: title.trim() || undefined,
         content: text.trim(),
         category: selectedCategory,
+        images: uploadedUrls,
       });
-      setText("");
-      setTitle("");
-      setComposing(false);
+      resetComposer();
       load();
     } catch (err: any) {
+      setUploadingImages(false);
       Toast.show({ type: "error", text1: err.message || "Could not post" });
     } finally {
       setPosting(false);
@@ -168,9 +235,21 @@ export default function CommunityScreen() {
           <ActivityIndicator color={theme.primary} />
         </View>
       ) : posts.length === 0 ? (
-        <View className="px-4 items-center py-10">
-          <Text className="text-sm text-center" style={{ color: theme.muted }}>
-            No posts here yet — be the first to share something.
+        <View className="px-4 items-center py-16">
+          <View
+            className="w-12 h-12 rounded-full items-center justify-center mb-3"
+            style={{ backgroundColor: theme.primaryLight }}
+          >
+            <Sparkles size={20} color={theme.primary} />
+          </View>
+          <Text
+            className="text-sm font-semibold text-center mb-1"
+            style={{ color: theme.foreground }}
+          >
+            Nothing here yet
+          </Text>
+          <Text className="text-xs text-center" style={{ color: theme.muted }}>
+            Be the first to share something in this category.
           </Text>
         </View>
       ) : (
@@ -191,24 +270,46 @@ export default function CommunityScreen() {
               }}
             >
               <Pressable onPress={() => router.push(`/(main)/post/${post.id}`)}>
-                <View className="flex-row items-center gap-2 mb-2">
-                  <Avatar name={post.authorName} size={32} />
+                <View className="flex-row items-center gap-2.5 mb-3">
+                  <Avatar name={post.authorName} size={34} />
                   <View className="flex-1">
+                    <View className="flex-row items-center gap-1.5">
+                      <Text
+                        className="text-sm font-semibold"
+                        style={{ color: theme.foreground }}
+                        numberOfLines={1}
+                      >
+                        {post.authorName}
+                      </Text>
+                      <View
+                        style={{
+                          width: 3,
+                          height: 3,
+                          borderRadius: 2,
+                          backgroundColor: theme.muted,
+                        }}
+                      />
+                      <Text className="text-xs" style={{ color: theme.muted }}>
+                        {timeAgo(post.createdAt)} ago
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    className="rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: theme.primaryLight }}
+                  >
                     <Text
-                      className="text-sm font-semibold"
-                      style={{ color: theme.foreground }}
+                      className="text-[10px] font-semibold"
+                      style={{ color: theme.primary }}
                     >
-                      {post.authorName}
-                    </Text>
-                    <Text className="text-xs" style={{ color: theme.muted }}>
-                      {timeAgo(post.createdAt)}
+                      {post.category}
                     </Text>
                   </View>
                 </View>
 
                 {post.title && (
                   <Text
-                    className="text-base font-bold mb-1"
+                    className="text-[15px] font-bold mb-1.5"
                     style={{ color: theme.foreground }}
                   >
                     {post.title}
@@ -216,51 +317,40 @@ export default function CommunityScreen() {
                 )}
                 <Text
                   className="text-sm leading-5 mb-3"
-                  numberOfLines={4}
-                  style={{ color: theme.foreground }}
+                  numberOfLines={3}
+                  style={{ color: theme.foreground, opacity: 0.85 }}
                 >
                   {post.content}
                 </Text>
+
+                {post.images && post.images.length > 0 && (
+                  <PostImageGallery images={post.images} variant="feed" />
+                )}
               </Pressable>
 
-              <View className="flex-row items-center justify-between">
-                <View
-                  className="rounded-full px-2.5 py-1"
-                  style={{ backgroundColor: theme.primaryLight }}
-                >
-                  <Text
-                    className="text-[10px] font-semibold"
-                    style={{ color: theme.primary }}
-                  >
-                    {post.category}
-                  </Text>
-                </View>
-                <View className="flex-row items-center gap-4">
-                  <Pressable
-                    onPress={() => handleLike(post.id)}
-                    hitSlop={8}
-                    className="flex-row items-center gap-1.5"
-                  >
+              <View
+                className="flex-row items-center gap-2 pt-3"
+                style={{ borderTopWidth: 1, borderTopColor: theme.border }}
+              >
+                <StatPill
+                  theme={theme}
+                  active={post.likedByMe}
+                  count={post.likes}
+                  onPress={() => handleLike(post.id)}
+                  icon={
                     <Heart
-                      size={14}
-                      color={theme.primary}
+                      size={13}
+                      color={post.likedByMe ? theme.primary : theme.muted}
                       fill={post.likedByMe ? theme.primary : "transparent"}
                     />
-                    <Text className="text-xs" style={{ color: theme.muted }}>
-                      {post.likes}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => router.push(`/(main)/post/${post.id}`)}
-                    hitSlop={8}
-                    className="flex-row items-center gap-1.5"
-                  >
-                    <MessageCircle size={14} color={theme.muted} />
-                    <Text className="text-xs" style={{ color: theme.muted }}>
-                      {post.commentCount}
-                    </Text>
-                  </Pressable>
-                </View>
+                  }
+                />
+                <StatPill
+                  theme={theme}
+                  count={post.commentCount}
+                  onPress={() => router.push(`/(main)/post/${post.id}`)}
+                  icon={<MessageCircle size={13} color={theme.muted} />}
+                />
               </View>
             </Card>
           ))}
@@ -283,9 +373,19 @@ export default function CommunityScreen() {
             style={{
               backgroundColor: theme.background,
               paddingBottom: insets.bottom + 16,
-              maxHeight: "85%",
+              maxHeight: "88%",
             }}
           >
+            <View
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: theme.border,
+                alignSelf: "center",
+                marginBottom: 14,
+              }}
+            />
             <View className="flex-row items-center justify-between mb-4">
               <Text
                 className="text-base font-semibold"
@@ -293,15 +393,20 @@ export default function CommunityScreen() {
               >
                 New post
               </Text>
-              <Pressable onPress={() => setComposing(false)}>
-                <X size={20} color={theme.muted} />
+              <Pressable
+                onPress={() => setComposing(false)}
+                hitSlop={8}
+                className="w-7 h-7 rounded-full items-center justify-center"
+                style={{ backgroundColor: theme.card }}
+              >
+                <X size={16} color={theme.muted} />
               </Pressable>
             </View>
 
             <ScrollView>
               <Text
                 className="text-xs font-semibold uppercase mb-2"
-                style={{ color: theme.muted }}
+                style={{ color: theme.muted, letterSpacing: 0.5 }}
               >
                 Category
               </Text>
@@ -355,10 +460,17 @@ export default function CommunityScreen() {
                 onChangeText={setText}
                 multiline
               />
+
+              <ImagePickerRow
+                uris={imageUris}
+                onChange={setImageUris}
+                theme={theme}
+              />
+
               <Pressable
                 onPress={handlePost}
                 disabled={posting || !text.trim()}
-                className="rounded-xl py-3 items-center mt-3"
+                className="rounded-xl py-3 items-center mt-4"
                 style={{
                   backgroundColor:
                     !text.trim() || posting
@@ -367,7 +479,11 @@ export default function CommunityScreen() {
                 }}
               >
                 <Text className="text-white text-sm font-semibold">
-                  {posting ? "Posting..." : "Post"}
+                  {uploadingImages
+                    ? "Uploading photos..."
+                    : posting
+                      ? "Posting..."
+                      : "Post"}
                 </Text>
               </Pressable>
             </ScrollView>

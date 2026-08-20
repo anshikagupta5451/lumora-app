@@ -8,6 +8,7 @@ import {
   User as UserIcon,
   Flame,
   Package,
+  FileText,
 } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
@@ -29,7 +30,7 @@ import Toast from "react-native-toast-message";
 import { Card } from "../../../components/ui/Card";
 import { getMySkinProfile } from "../../../src/api/skinProfile";
 import { useAuthStore } from "../../../src/store/useAuthStore";
-import { Zap } from 'lucide-react-native' 
+import { Zap } from "lucide-react-native";
 
 interface SkinProfile {
   skinType: string;
@@ -320,43 +321,45 @@ export default function ProfileScreen() {
       </Card>
 
       {/* Streak card */}
-      <Pressable onPress={() => router.push('/(main)/my-stats')}>
-   
-      <Card
-        className="p-4 mb-4 flex-row items-center justify-around"
-        style={{ backgroundColor: theme.card, borderColor: theme.border }}
-      >
-        <View className="items-center">
-          <View className="flex-row items-center gap-1">
-            <Flame
-              size={16}
-              color={theme.accent}
-              fill={streak > 0 ? theme.accent : "transparent"}
-            />
+      <Pressable onPress={() => router.push("/(main)/my-stats")}>
+        <Card
+          className="p-4 mb-4 flex-row items-center justify-around"
+          style={{ backgroundColor: theme.card, borderColor: theme.border }}
+        >
+          <View className="items-center">
+            <View className="flex-row items-center gap-1">
+              <Flame
+                size={16}
+                color={theme.accent}
+                fill={streak > 0 ? theme.accent : "transparent"}
+              />
+              <Text
+                className="text-lg font-bold"
+                style={{ color: theme.foreground }}
+              >
+                {streak}
+              </Text>
+            </View>
+            <Text className="text-[11px] mt-0.5" style={{ color: theme.muted }}>
+              Day streak
+            </Text>
+          </View>
+          <View
+            className="w-px h-8"
+            style={{ backgroundColor: theme.border }}
+          />
+          <View className="items-center">
             <Text
               className="text-lg font-bold"
               style={{ color: theme.foreground }}
             >
-              {streak}
+              {totalCheckIns}
+            </Text>
+            <Text className="text-[11px] mt-0.5" style={{ color: theme.muted }}>
+              Check-ins
             </Text>
           </View>
-          <Text className="text-[11px] mt-0.5" style={{ color: theme.muted }}>
-            Day streak
-          </Text>
-        </View>
-        <View className="w-px h-8" style={{ backgroundColor: theme.border }} />
-        <View className="items-center">
-          <Text
-            className="text-lg font-bold"
-            style={{ color: theme.foreground }}
-          >
-            {totalCheckIns}
-          </Text>
-          <Text className="text-[11px] mt-0.5" style={{ color: theme.muted }}>
-            Check-ins
-          </Text>
-        </View>
-      </Card>
+        </Card>
       </Pressable>
 
       {history.length > 0 && (
@@ -431,6 +434,12 @@ export default function ProfileScreen() {
           icon={<Package size={16} color={theme.muted} />}
           label="My Products"
           onPress={() => router.push("/(main)/my-products")}
+          theme={theme}
+        />
+        <MenuRow
+          icon={<FileText size={16} color={theme.muted} />}
+          label="My Posts"
+          onPress={() => router.push("/(main)/my-posts")}
           theme={theme}
         />
       </Card>
