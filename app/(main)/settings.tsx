@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import React, { useState } from "react";
-import { Pressable, Switch, Text, View } from "react-native";
+import { Pressable, Switch, View } from "react-native";
+import { Text } from "../../components/ui/Text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card } from "../../components/ui/Card";
 import { useTheme } from "../../src/theme/ThemeContext";
@@ -114,7 +115,7 @@ export default function SettingsScreen() {
                 }}
               />
               <Text
-                style={{ fontSize: 11, fontWeight: "600", color: p.foreground }}
+                style={{ fontSize: 13, fontWeight: "600", color: p.foreground }}
               >
                 {p.label}
               </Text>

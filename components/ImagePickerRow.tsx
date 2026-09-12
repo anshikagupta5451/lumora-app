@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Image, Pressable, ScrollView, Text, Alert } from "react-native";
+import { View, Image, Pressable, ScrollView, Alert } from "react-native";
+import { Text } from "./ui/Text";
 import * as ImagePicker from "expo-image-picker";
 import { ImagePlus, X } from "lucide-react-native";
 const MAX_IMAGES = 6;

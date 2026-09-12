@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
-  Text,
   ScrollView,
   Pressable,
-  TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Text, TextInput } from "../../../components/ui/Text";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ChevronLeft,
@@ -17,12 +16,15 @@ import {
   Send,
   ArrowDown,
   MessageCircle,
+  MoreVertical,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { CommentThread } from "../../../components/CommentThread";
 import { PostImageGallery } from "../../../components/PhotoImageGallary";
+import { PostActionSheet } from "../../../components/PostActionSheet";
 import { useTheme } from "../../../src/theme/ThemeContext";
+import { useAuthStore } from "../../../src/store/useAuthStore";
 import {
   getPost,
   getComments,
@@ -58,6 +60,12 @@ export default function PostDetailScreen() {
   const [replyAnonymously, setReplyAnonymously] = useState(false);
   const [posting, setPosting] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+
+  // NOTE: assumes useAuthStore exposes the logged-in user's id at
+  // `user.id`. Adjust this line if your store shapes it differently
+  // (e.g. `userId` directly on the store).
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
   const load = useCallback(async () => {
     try {
@@ -222,11 +230,26 @@ export default function PostDetailScreen() {
                     {post.category}
                   </Text>
                 </View>
-                <Text style={{ color: theme.muted, fontSize: 11 }}>
+                <Text style={{ color: theme.muted, fontSize: 13 }}>
                   {timeAgo(post.createdAt)} ago
                 </Text>
               </View>
             </View>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setActionSheetVisible(true)}
+            hitSlop={10}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 17,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: theme.background,
+            }}
+          >
+            <MoreVertical size={16} color={theme.muted} />
           </Pressable>
 
           <Pressable
@@ -250,7 +273,7 @@ export default function PostDetailScreen() {
               fill={post.likedByMe ? theme.primary : "transparent"}
             />
             <Text
-              style={{ color: theme.primary, fontSize: 13, fontWeight: "700" }}
+              style={{ color: theme.primary, fontSize: 14, fontWeight: "700" }}
             >
               {post.likes}
             </Text>
@@ -306,7 +329,7 @@ export default function PostDetailScreen() {
             <Text
               style={{
                 color: theme.foreground,
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: "700",
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
@@ -323,11 +346,7 @@ export default function PostDetailScreen() {
               }}
             >
               <Text
-                style={{
-                  color: theme.primary,
-                  fontSize: 11,
-                  fontWeight: "700",
-                }}
+                style={{ color: theme.primary, fontSize: 13, fontWeight: "700" }}
               >
                 {comments.length}
               </Text>
@@ -345,7 +364,7 @@ export default function PostDetailScreen() {
             }}
           >
             <Text
-              style={{ color: theme.muted, fontSize: 12, fontWeight: "600" }}
+              style={{ color: theme.muted, fontSize: 14, fontWeight: "600" }}
             >
               Date
             </Text>
@@ -361,10 +380,7 @@ export default function PostDetailScreen() {
             >
               <MessageCircle size={16} color={theme.primary} />
             </View>
-            <Text
-              className="text-xs text-center"
-              style={{ color: theme.muted }}
-            >
+            <Text className="text-xs text-center" style={{ color: theme.muted }}>
               No replies yet — be the first.
             </Text>
           </View>
@@ -454,7 +470,7 @@ export default function PostDetailScreen() {
           <Text
             style={{
               color: replyAnonymously ? theme.primary : theme.muted,
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: replyAnonymously ? "600" : "400",
             }}
           >
@@ -491,6 +507,23 @@ export default function PostDetailScreen() {
           </Pressable>
         </View>
       </View>
+
+      <PostActionSheet
+        visible={actionSheetVisible}
+        onClose={() => setActionSheetVisible(false)}
+        postId={post.id}
+        postContent={post.content}
+        isBookmarked={post.bookmarkedByMe}
+        isOwnPost={Boolean(currentUserId) && post.userId === currentUserId}
+        theme={theme}
+        onBookmarkChange={(bookmarked) =>
+          setPost((prev) => (prev ? { ...prev, bookmarkedByMe: bookmarked } : prev))
+        }
+        onDeleted={() => {
+          Toast.show({ type: "success", text1: "Post deleted" });
+          router.back();
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }

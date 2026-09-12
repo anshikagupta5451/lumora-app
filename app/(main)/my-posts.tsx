@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native'
+import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { Text } from "../../components/ui/Text";
 import { useRouter } from 'expo-router'
 import { ChevronLeft, Heart, MessageCircle, FileText } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -64,7 +65,7 @@ export default function MyPostsScreen() {
                 </Text>
                 <View className="flex-row items-center justify-between">
                   <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: theme.primaryLight }}>
-                    <Text className="text-[10px] font-semibold" style={{ color: theme.primary }}>{post.category}</Text>
+                    <Text className="text-[13px] font-semibold" style={{ color: theme.primary }}>{post.category}</Text>
                   </View>
                   <View className="flex-row items-center gap-4">
                     <View className="flex-row items-center gap-1.5">
@@ -75,7 +76,7 @@ export default function MyPostsScreen() {
                       <MessageCircle size={13} color={theme.muted} />
                       <Text className="text-xs" style={{ color: theme.muted }}>{post.commentCount}</Text>
                     </View>
-                    <Text className="text-[10px]" style={{ color: theme.muted }}>{timeAgo(post.createdAt)}</Text>
+                    <Text className="text-[13px]" style={{ color: theme.muted }}>{timeAgo(post.createdAt)}</Text>
                   </View>
                 </View>
               </Card>

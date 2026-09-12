@@ -1,13 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    Text,
-    View,
-} from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { Text } from "../../../components/ui/Text";
 import { Card } from "../../../components/ui/Card";
 import { getProduct, Product } from "../../../src/api/products";
 import { useTheme } from "../../../src/theme/ThemeContext";
@@ -57,7 +52,7 @@ export default function ProductDetailScreen() {
         <Text className="text-sm text-muted-foreground">Back</Text>
       </Pressable>
 
-      <Text className="text-[11px] text-muted-foreground uppercase">
+      <Text className="text-[14px] text-muted-foreground uppercase">
         {product.brand}
       </Text>
       <Text className="text-2xl font-bold text-foreground mt-1">

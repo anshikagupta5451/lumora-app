@@ -1,18 +1,52 @@
 import { Tabs, useRouter } from "expo-router";
-import { Compass, Sparkles, User, Users, Plus } from "lucide-react-native";
+import {
+  Compass,
+  Sparkles,
+  User,
+  Users,
+  Plus,
+  ListChecks,
+  PackagePlus,
+  Star,
+  ScanLine,
+  ChevronRight,
+} from "lucide-react-native";
 import React, { useState } from "react";
-import { View, Pressable, Text, Modal } from "react-native";
+import { View, Pressable, Modal } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Text } from "../../../components/ui/Text";
 import { useTheme } from "../../../src/theme/ThemeContext";
+import { iconColors } from "../../../src/theme/iconColors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function QuickActionSheet({ visible, onClose, theme }: any) {
   const router = useRouter();
 
   const actions = [
-    { label: "Create routine", route: "/(main)/routine-builder" },
-    { label: "Add product", route: "/(main)/add-my-product" },
-    { label: "Write a review", route: "/(main)/share-review" },
-    { label: "Scan a product", route: "/(main)/scan-product" },
+    {
+      label: "Create routine",
+      route: "/(main)/routine-builder",
+      icon: ListChecks,
+      color: iconColors.blue,
+    },
+    {
+      label: "Add product",
+      route: "/(main)/add-my-product",
+      icon: PackagePlus,
+      color: iconColors.teal,
+    },
+    {
+      label: "Write a review",
+      route: "/(main)/share-review",
+      icon: Star,
+      color: iconColors.pink,
+    },
+    {
+      label: "Scan a product",
+      route: "/(main)/scan-product",
+      icon: ScanLine,
+      color: iconColors.purple,
+    },
   ];
   return (
     <Modal
@@ -43,15 +77,22 @@ function QuickActionSheet({ visible, onClose, theme }: any) {
                 onClose();
                 router.push(a.route as any);
               }}
-              className="py-3.5"
+              className="flex-row items-center gap-3 py-3"
               style={{ borderBottomWidth: 1, borderBottomColor: theme.border }}
             >
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{ backgroundColor: `${a.color}22` }}
+              >
+                <a.icon size={18} color={a.color} />
+              </View>
               <Text
-                className="text-sm font-medium"
+                className="flex-1 text-sm font-medium"
                 style={{ color: theme.foreground }}
               >
                 {a.label}
               </Text>
+              <ChevronRight size={16} color={theme.muted} />
             </Pressable>
           ))}
         </View>
@@ -75,14 +116,18 @@ export default function TabsLayout() {
           tabBarStyle: {
             borderTopColor: theme.border,
             backgroundColor: theme.card,
-            height: 60 + insets.bottom,
-            paddingBottom: insets.bottom + 8,
-            paddingTop: 8,
+            height: 48 + insets.bottom,
+            paddingBottom: insets.bottom + 4,
+            paddingTop: 4,
           },
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: "600",
-            marginTop: 2,
+            marginTop: 1,
+          },
+          tabBarIconStyle: {
+            width: 18,
+            height: 18,
           },
         }}
       >
@@ -90,19 +135,15 @@ export default function TabsLayout() {
           name="home"
           options={{
             title: "Brief",
-            tabBarIcon: ({ color, size }) => (
-              <Sparkles color={color} size={size} />
-            ),
+            tabBarIcon: ({ color }) => <Sparkles color={color} size={18} />,
           }}
         />
-     
+
         <Tabs.Screen
           name="explore"
           options={{
             title: "Explore",
-            tabBarIcon: ({ color, size }) => (
-              <Compass color={color} size={size} />
-            ),
+            tabBarIcon: ({ color }) => <Compass color={color} size={18} />,
           }}
         />
 
@@ -111,15 +152,17 @@ export default function TabsLayout() {
           options={{
             title: "",
             tabBarIcon: () => (
-              <View
+              <LinearGradient
+                colors={theme.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
-                  marginBottom: 22,
+                  width: 38,
+                  height: 38,
+                  borderRadius: 19,
+                  marginBottom: 16,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: theme.primary,
                   shadowColor: "#000",
                   shadowOpacity: 0.2,
                   shadowRadius: 6,
@@ -127,8 +170,8 @@ export default function TabsLayout() {
                   elevation: 5,
                 }}
               >
-                <Plus size={22} color="#fff" />
-              </View>
+                <Plus size={18} color="#fff" />
+              </LinearGradient>
             ),
             tabBarButton: (props) => (
               <Pressable
@@ -146,16 +189,14 @@ export default function TabsLayout() {
           name="community"
           options={{
             title: "Community",
-            tabBarIcon: ({ color, size }) => (
-              <Users color={color} size={size} />
-            ),
+            tabBarIcon: ({ color }) => <Users color={color} size={18} />,
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             title: "Profile",
-            tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+            tabBarIcon: ({ color }) => <User color={color} size={18} />,
           }}
         />
 

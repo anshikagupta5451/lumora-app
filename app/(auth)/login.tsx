@@ -1,13 +1,12 @@
 import React from "react";
 import {
   View,
-  Text,
-  TextInput,
   Pressable,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from "react-native";
+import { Text, TextInput } from "../../components/ui/Text";
 import { Link, useRouter } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -155,7 +154,7 @@ export default function LoginScreen() {
           />
           {errors.email && (
             <Text
-              className="text-[11px] mt-1 ml-0.5"
+              className="text-[14px] mt-1 ml-0.5"
               style={{ color: "#EF4444" }}
             >
               {errors.email.message}
@@ -191,7 +190,7 @@ export default function LoginScreen() {
           />
           {errors.password && (
             <Text
-              className="text-[11px] mt-1 ml-0.5"
+              className="text-[14px] mt-1 ml-0.5"
               style={{ color: "#EF4444" }}
             >
               {errors.password.message}
@@ -215,7 +214,7 @@ export default function LoginScreen() {
           <View className="flex-row justify-between mt-5">
             <Link
               href="/(auth)/signup"
-              style={{ color: theme.primary, fontWeight: "500", fontSize: 13 }}
+              style={{ color: theme.primary, fontWeight: "500", fontSize: 14 }}
             >
               Create an account
             </Link>
@@ -231,7 +230,7 @@ export default function LoginScreen() {
           </View>
 
           <Text
-            className="text-[10px] text-center mt-5 leading-4"
+            className="text-[13px] text-center mt-5 leading-4"
             style={{ color: theme.muted }}
           >
             By continuing, you agree to our Terms & Privacy Policy.

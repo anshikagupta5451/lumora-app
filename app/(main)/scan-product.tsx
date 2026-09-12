@@ -1,17 +1,25 @@
 import React, { useState } from 'react'
-import { View, Text, Pressable, ActivityIndicator } from 'react-native'
+import { View, Pressable, ActivityIndicator } from "react-native";
+import { Text } from "../../components/ui/Text";
 import { CameraView, useCameraPermissions } from 'expo-camera'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import { ChevronLeft, ScanLine } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
 import { useTheme } from '../../src/theme/ThemeContext'
 import { getProductByBarcode } from '../../src/api/products'
+import { useScanStore } from '../../src/store/useScanStore'
+
+// When opened from inside "Add a product" or "Write a review", scanning
+// should hand the result back to that screen instead of always jumping to
+// the review flow (the default when launched from the quick-action sheet).
+type ReturnTo = 'add-my-product' | 'share-review'
 
 export default function ScanProductScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { theme } = useTheme()
+  const { returnTo } = useLocalSearchParams<{ returnTo?: ReturnTo }>()
   const [permission, requestPermission] = useCameraPermissions()
   const [scanned, setScanned] = useState(false)
   const [looking, setLooking] = useState(false)
@@ -41,10 +49,22 @@ export default function ScanProductScreen() {
     setLooking(true)
     try {
       const product = await getProductByBarcode(data)
-      router.replace(`/(main)/share-review?productId=${product.id}`)
+      Toast.show({ type: 'success', text1: `Found ${product.name}` })
+      if (returnTo === 'add-my-product' || returnTo === 'share-review') {
+        // Hand the result back to the screen that pushed this one, rather
+        // than navigating to it fresh and leaving a duplicate on the stack.
+        useScanStore.getState().setScannedProduct(product)
+        router.back()
+      } else {
+        router.replace(`/(main)/share-review?productId=${product.id}`)
+      }
     } catch {
       Toast.show({ type: 'info', text1: "Product not found — you can add it manually" })
-      router.replace('/(main)/add-my-product')
+      if (returnTo === 'add-my-product' || returnTo === 'share-review') {
+        router.back()
+      } else {
+        router.replace('/(main)/add-my-product')
+      }
     } finally {
       setLooking(false)
     }

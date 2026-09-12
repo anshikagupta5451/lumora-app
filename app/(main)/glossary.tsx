@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-} from "react-native";
+import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { Text, TextInput } from "../../components/ui/Text";
 import { useRouter } from "expo-router";
 import { ChevronLeft, Search } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -84,7 +78,7 @@ export default function GlossaryScreen() {
                     {ing.name}
                   </Text>
                   <View className="bg-primary/10 rounded-full px-2.5 py-1">
-                    <Text className="text-[10px] text-primary font-medium capitalize">
+                    <Text className="text-[13px] text-primary font-medium capitalize">
                       {ing.category}
                     </Text>
                   </View>
@@ -101,7 +95,7 @@ export default function GlossaryScreen() {
                           key={g}
                           className="bg-accent/10 border border-accent/30 rounded-full px-2.5 py-1"
                         >
-                          <Text className="text-[10px] text-accent font-medium capitalize">
+                          <Text className="text-[13px] text-accent font-medium capitalize">
                             Good for {g}
                           </Text>
                         </View>

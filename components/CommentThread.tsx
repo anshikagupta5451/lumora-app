@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "./ui/Text";
 import { useTheme } from "../src/theme/ThemeContext";
 import { Comment } from "../src/api/posts";
 import { Avatar } from "./Avatar";
@@ -65,7 +66,7 @@ export function CommentThread({ comment, allComments, depth, onReply }: Props) {
                   backgroundColor: theme.muted,
                 }}
               />
-              <Text className="text-[10px]" style={{ color: theme.muted }}>
+              <Text className="text-[13px]" style={{ color: theme.muted }}>
                 {timeAgo(comment.createdAt)} ago
               </Text>
             </View>
@@ -82,7 +83,7 @@ export function CommentThread({ comment, allComments, depth, onReply }: Props) {
               style={{ backgroundColor: theme.primaryLight }}
             >
               <Text
-                className="text-[10px] font-semibold"
+                className="text-[13px] font-semibold"
                 style={{ color: theme.primary }}
               >
                 Reply

@@ -1,11 +1,6 @@
 import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-} from "react-native";
+import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { Text } from "../../components/ui/Text";
 import { useRouter, useFocusEffect } from "expo-router";
 import {
   ChevronLeft,
@@ -150,7 +145,7 @@ export default function MyProductsScreen() {
               </Text>
             </View>
             <Text
-              className="text-[10px] uppercase"
+              className="text-[13px] uppercase"
               style={{ color: theme.muted }}
             >
               In use
@@ -170,7 +165,7 @@ export default function MyProductsScreen() {
               </Text>
             </View>
             <Text
-              className="text-[10px] uppercase"
+              className="text-[13px] uppercase"
               style={{ color: theme.muted }}
             >
               Finished
@@ -249,7 +244,7 @@ export default function MyProductsScreen() {
                   </View>
                   <View className="flex-1">
                     <Text
-                      className="text-[11px] uppercase"
+                      className="text-[14px] uppercase"
                       style={{ color: theme.muted }}
                     >
                       {item.product?.brand || item.customBrand || "Custom"}
@@ -316,7 +311,7 @@ export default function MyProductsScreen() {
                   </View>
                   <View className="flex-1">
                     <Text
-                      className="text-[11px] uppercase"
+                      className="text-[14px] uppercase"
                       style={{ color: theme.muted }}
                     >
                       {item.product?.brand || item.customBrand || "Custom"}

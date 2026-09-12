@@ -6,14 +6,14 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
   View,
 } from "react-native";
+import { Text, TextInput } from "../../components/ui/Text";
 import Toast from "react-native-toast-message";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card } from "../../components/ui/Card";
 import { getProducts, Product } from "../../src/api/products";
+import { getMyProducts } from "../../src/api/userProducts";
 import { createRoutine } from "../../src/api/routines";
 import { useTheme } from "../../src/theme/ThemeContext";
 
@@ -25,19 +25,43 @@ export default function RoutineBuilderScreen() {
   const [timeOfDay, setTimeOfDay] = useState<"morning" | "evening">("morning");
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerSource, setPickerSource] = useState<"mine" | "catalog">("mine");
+  const [myProducts, setMyProducts] = useState<Product[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (pickerOpen) {
-      setLoadingProducts(true);
+    if (!pickerOpen) return;
+    setLoadingProducts(true);
+    if (pickerSource === "mine") {
+      getMyProducts()
+        .then((mine) =>
+          setMyProducts(
+            mine
+              .filter((up) => up.product)
+              .map((up) => ({
+                id: up.product!.id,
+                name: up.product!.name,
+                brand: up.product!.brand,
+                category: up.product!.category,
+                ingredients: [],
+                price: 0,
+                imageUrl: null,
+              })),
+          ),
+        )
+        .catch(() => setMyProducts([]))
+        .finally(() => setLoadingProducts(false));
+    } else {
       getProducts()
         .then(setProducts)
         .catch(() => setProducts([]))
         .finally(() => setLoadingProducts(false));
     }
-  }, [pickerOpen]);
+  }, [pickerOpen, pickerSource]);
+
+  const pickerItems = pickerSource === "mine" ? myProducts : products;
 
   const addProduct = (product: Product) => {
     if (!selectedProducts.find((p) => p.id === product.id)) {
@@ -225,7 +249,7 @@ export default function RoutineBuilderScreen() {
                 </View>
                 <View className="flex-1">
                   <Text
-                    className="text-[11px] uppercase"
+                    className="text-[14px] uppercase"
                     style={{ color: theme.muted }}
                   >
                     {product.brand}
@@ -322,6 +346,49 @@ export default function RoutineBuilderScreen() {
               </Pressable>
             </View>
 
+            <View className="flex-row gap-2 mb-4">
+              <Pressable
+                onPress={() => setPickerSource("mine")}
+                className="flex-1 rounded-xl py-2.5 items-center"
+                style={{
+                  backgroundColor:
+                    pickerSource === "mine" ? theme.primary : theme.card,
+                  borderWidth: 1,
+                  borderColor:
+                    pickerSource === "mine" ? theme.primary : theme.border,
+                }}
+              >
+                <Text
+                  className="text-xs font-semibold"
+                  style={{
+                    color: pickerSource === "mine" ? "#fff" : theme.muted,
+                  }}
+                >
+                  My products
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setPickerSource("catalog")}
+                className="flex-1 rounded-xl py-2.5 items-center"
+                style={{
+                  backgroundColor:
+                    pickerSource === "catalog" ? theme.primary : theme.card,
+                  borderWidth: 1,
+                  borderColor:
+                    pickerSource === "catalog" ? theme.primary : theme.border,
+                }}
+              >
+                <Text
+                  className="text-xs font-semibold"
+                  style={{
+                    color: pickerSource === "catalog" ? "#fff" : theme.muted,
+                  }}
+                >
+                  All products
+                </Text>
+              </Pressable>
+            </View>
+
             {loadingProducts ? (
               <View
                 style={{
@@ -336,15 +403,33 @@ export default function RoutineBuilderScreen() {
                   Loading products...
                 </Text>
               </View>
-            ) : products.length === 0 ? (
+            ) : pickerItems.length === 0 ? (
               <View style={{ paddingVertical: 40, alignItems: "center" }}>
-                <Text className="text-sm" style={{ color: theme.muted }}>
-                  No products found.
+                <Text
+                  className="text-sm text-center"
+                  style={{ color: theme.muted }}
+                >
+                  {pickerSource === "mine"
+                    ? "You haven't added any products to your shelf yet."
+                    : "No products found."}
                 </Text>
+                {pickerSource === "mine" && (
+                  <Pressable
+                    onPress={() => setPickerSource("catalog")}
+                    className="mt-3"
+                  >
+                    <Text
+                      className="text-xs font-medium"
+                      style={{ color: theme.primary }}
+                    >
+                      Browse the full catalog instead
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             ) : (
               <ScrollView>
-                {products.map((product) => (
+                {pickerItems.map((product) => (
                   <Pressable
                     key={product.id}
                     onPress={() => addProduct(product)}
@@ -356,7 +441,7 @@ export default function RoutineBuilderScreen() {
                   >
                     <View className="flex-1 pr-3">
                       <Text
-                        className="text-[11px] uppercase"
+                        className="text-[14px] uppercase"
                         style={{ color: theme.muted }}
                       >
                         {product.brand}

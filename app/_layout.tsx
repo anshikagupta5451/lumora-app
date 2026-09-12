@@ -7,39 +7,11 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "../src/store/useAuthStore";
 import { setupPushNotifications } from "../src/lib/notifications";
 import { ThemeProvider } from "../src/theme/ThemeContext";
-import { Text, TextInput } from "react-native";
-import {
-  useFonts,
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-} from "@expo-google-fonts/plus-jakarta-sans";
 
-// @ts-ignore — apply the font globally to every Text/TextInput in the app
-Text.defaultProps = Text.defaultProps || {};
-Text.defaultProps.style = [
-  { fontFamily: "PlusJakartaSans_400Regular" },
-  Text.defaultProps.style,
-];
-
-// @ts-ignore
-TextInput.defaultProps = TextInput.defaultProps || {};
-TextInput.defaultProps.style = [
-  { fontFamily: "PlusJakartaSans_400Regular" },
-  TextInput.defaultProps.style,
-];
-
+// Plus Jakarta Sans is embedded natively by the expo-font config plugin in
+// app.json, so there is nothing to load at runtime. Text and TextInput from
+// components/ui/Text apply it.
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-    PlusJakartaSans_800ExtraBold,
-  });
-
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
@@ -47,8 +19,6 @@ export default function RootLayout() {
       setupPushNotifications();
     }
   }, [isAuthenticated]);
-
-  if (!fontsLoaded) return null;
 
   return (
     <SafeAreaProvider>

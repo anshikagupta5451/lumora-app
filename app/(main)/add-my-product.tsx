@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, Pressable, TextInput, ScrollView, ActivityIndicator } from 'react-native'
-import { useRouter } from 'expo-router'
+import { View, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { Text, TextInput } from "../../components/ui/Text";
+import { useRouter, useFocusEffect } from 'expo-router'
 import {
   ChevronLeft, Search, PackagePlus, Sparkles, Droplet,
   Sun as SunIcon, SprayCan, Layers, Wand2, Scissors, MoreHorizontal,
-  Lock, Unlock,
+  Lock, Unlock, ScanLine,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
@@ -14,6 +15,7 @@ import { useTheme } from '../../src/theme/ThemeContext'
 import { getProducts, Product } from '../../src/api/products'
 import { addMyProduct } from '../../src/api/userProducts'
 import { submitReview } from '../../src/api/reviews'
+import { useScanStore } from '../../src/store/useScanStore'
 
 const categoryOptions = [
   { label: 'Cleanser', icon: Droplet },
@@ -62,6 +64,19 @@ export default function AddMyProductScreen() {
     }
   }, [mode, query])
 
+  // Pick up a barcode scan result handed back by the scanner screen
+  useFocusEffect(
+    React.useCallback(() => {
+      const scanned = useScanStore.getState().scannedProduct
+      if (scanned) {
+        setMode('catalog')
+        setSelectedProduct(scanned)
+        setQuery(scanned.name)
+        useScanStore.getState().setScannedProduct(null)
+      }
+    }, []),
+  )
+
   const canSubmit = mode === 'catalog' ? Boolean(selectedProduct) : Boolean(customName.trim())
 
   const handleSubmit = async () => {
@@ -72,6 +87,7 @@ export default function AddMyProductScreen() {
         productId: mode === 'catalog' ? selectedProduct!.id : undefined,
         customName: mode === 'custom' ? customName.trim() : undefined,
         customBrand: mode === 'custom' ? customBrand.trim() || undefined : undefined,
+        category: mode === 'custom' ? category.toLowerCase() || undefined : undefined,
         openedAt: hasOpened ? new Date().toISOString() : undefined,
         quantityTotal: quantityTotal ? Number(quantityTotal) : undefined,
         quantityUnit: quantityTotal ? quantityUnit : undefined,
@@ -157,19 +173,28 @@ export default function AddMyProductScreen() {
         {mode === 'catalog' ? (
           <>
             <Card className="p-4 mb-3" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
-              <View
-                className="flex-row items-center rounded-xl px-3.5 py-3 mb-1"
-                style={{ borderWidth: 1, borderColor: theme.border, backgroundColor: theme.background }}
-              >
-                <Search size={16} color={theme.muted} />
-                <TextInput
-                  className="flex-1 ml-2 text-sm"
-                  style={{ color: theme.foreground }}
-                  placeholder="Search by name or brand..."
-                  placeholderTextColor={theme.muted}
-                  value={query}
-                  onChangeText={setQuery}
-                />
+              <View className="flex-row items-center gap-2">
+                <View
+                  className="flex-1 flex-row items-center rounded-xl px-3.5 py-3"
+                  style={{ borderWidth: 1, borderColor: theme.border, backgroundColor: theme.background }}
+                >
+                  <Search size={16} color={theme.muted} />
+                  <TextInput
+                    className="flex-1 ml-2 text-sm"
+                    style={{ color: theme.foreground }}
+                    placeholder="Search by name or brand..."
+                    placeholderTextColor={theme.muted}
+                    value={query}
+                    onChangeText={setQuery}
+                  />
+                </View>
+                <Pressable
+                  onPress={() => router.push('/(main)/scan-product?returnTo=add-my-product')}
+                  className="w-12 h-12 rounded-xl items-center justify-center"
+                  style={{ backgroundColor: theme.primaryLight, borderWidth: 1, borderColor: theme.primary }}
+                >
+                  <ScanLine size={18} color={theme.primary} />
+                </Pressable>
               </View>
             </Card>
 
@@ -219,12 +244,12 @@ export default function AddMyProductScreen() {
                         <Droplet size={18} color={theme.primary} />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-[11px] uppercase" style={{ color: theme.muted }}>{product.brand}</Text>
+                        <Text className="text-[14px] uppercase" style={{ color: theme.muted }}>{product.brand}</Text>
                         <Text className="text-sm font-medium" style={{ color: theme.foreground }}>{product.name}</Text>
                       </View>
                       {isSelected && (
                         <View className="w-6 h-6 rounded-full items-center justify-center" style={{ backgroundColor: theme.primary }}>
-                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>✓</Text>
+                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>✓</Text>
                         </View>
                       )}
                     </Card>

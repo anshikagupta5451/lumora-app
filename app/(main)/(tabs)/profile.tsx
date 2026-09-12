@@ -9,28 +9,29 @@ import {
   Flame,
   Package,
   FileText,
+  Award,
+  CalendarCheck,
+  BookOpen,
 } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
   getStreak,
   getCheckInHistory,
+  updateCheckIn,
   CheckIn,
 } from "../../../src/api/checkins";
 import { useTheme } from "../../../src/theme/ThemeContext";
 
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { Text } from "../../../components/ui/Text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Card } from "../../../components/ui/Card";
 import { getMySkinProfile } from "../../../src/api/skinProfile";
+import { getBounties } from "../../../src/api/bounties";
 import { useAuthStore } from "../../../src/store/useAuthStore";
-import { Zap } from "lucide-react-native";
+import { CheckInRow, isToday } from "../../../components/CheckInJournal";
+import { iconColors } from "../../../src/theme/iconColors";
 
 interface SkinProfile {
   skinType: string;
@@ -69,12 +70,14 @@ function Pill({ label, theme }: { label: string; theme: any }) {
 }
 
 function MenuRow({
-  icon,
+  icon: Icon,
+  color,
   label,
   onPress,
   theme,
 }: {
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ size?: number; color?: string }>;
+  color: string;
   label: string;
   onPress: () => void;
   theme: any;
@@ -82,10 +85,15 @@ function MenuRow({
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center justify-between py-3.5"
+      className="flex-row items-center justify-between py-3"
     >
       <View className="flex-row items-center gap-3">
-        {icon}
+        <View
+          className="w-9 h-9 rounded-full items-center justify-center"
+          style={{ backgroundColor: `${color}22` }}
+        >
+          <Icon size={16} color={color} />
+        </View>
         <Text
           className="text-sm font-medium"
           style={{ color: theme.foreground }}
@@ -106,6 +114,7 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [streak, setStreak] = useState(0);
   const [totalCheckIns, setTotalCheckIns] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<CheckIn[]>([]);
@@ -141,12 +150,22 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  const loadPoints = useCallback(async () => {
+    try {
+      const data = await getBounties();
+      setTotalPoints(data.totalPoints);
+    } catch {
+      // fail silently
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
       loadStreak();
       loadHistory();
-    }, [loadProfile, loadStreak, loadHistory]),
+      loadPoints();
+    }, [loadProfile, loadStreak, loadHistory, loadPoints]),
   );
 
   const handleLogout = async () => {
@@ -155,22 +174,19 @@ export default function ProfileScreen() {
     router.replace("/(auth)/login");
   };
 
-  const moodLabels: Record<number, string> = {
-    1: "Struggling",
-    2: "Not great",
-    3: "Okay",
-    4: "Good",
-    5: "Great",
+  const handleEditCheckIn = async (
+    id: string,
+    updates: { mood: number; note: string },
+  ) => {
+    try {
+      const updated = await updateCheckIn(id, updates);
+      setHistory((prev) => prev.map((c) => (c.id === id ? updated : c)));
+    } catch {
+      Toast.show({ type: "error", text1: "Could not update — try again" });
+    }
   };
 
-  function formatDate(dateStr: string) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  }
+  const todayEntry = history.find((c) => isToday(c.createdAt));
 
   return (
     <ScrollView
@@ -240,7 +256,12 @@ export default function ProfileScreen() {
       >
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center gap-2">
-            <Sparkles size={16} color={theme.primary} />
+            <View
+              className="w-8 h-8 rounded-full items-center justify-center"
+              style={{ backgroundColor: `${iconColors.purple}22` }}
+            >
+              <Sparkles size={15} color={iconColors.purple} />
+            </View>
             <Text
               className="text-sm font-semibold"
               style={{ color: theme.foreground }}
@@ -327,36 +348,66 @@ export default function ProfileScreen() {
           style={{ backgroundColor: theme.card, borderColor: theme.border }}
         >
           <View className="items-center">
-            <View className="flex-row items-center gap-1">
+            <View
+              className="w-9 h-9 rounded-full items-center justify-center mb-1.5"
+              style={{ backgroundColor: `${iconColors.amber}22` }}
+            >
               <Flame
-                size={16}
-                color={theme.accent}
-                fill={streak > 0 ? theme.accent : "transparent"}
+                size={17}
+                color={iconColors.amber}
+                fill={streak > 0 ? iconColors.amber : "transparent"}
               />
-              <Text
-                className="text-lg font-bold"
-                style={{ color: theme.foreground }}
-              >
-                {streak}
-              </Text>
             </View>
-            <Text className="text-[11px] mt-0.5" style={{ color: theme.muted }}>
+            <Text
+              className="text-lg font-bold"
+              style={{ color: theme.foreground }}
+            >
+              {streak}
+            </Text>
+            <Text className="text-[14px] mt-0.5" style={{ color: theme.muted }}>
               Day streak
             </Text>
           </View>
           <View
-            className="w-px h-8"
+            className="w-px h-10"
             style={{ backgroundColor: theme.border }}
           />
           <View className="items-center">
+            <View
+              className="w-9 h-9 rounded-full items-center justify-center mb-1.5"
+              style={{ backgroundColor: `${iconColors.blue}22` }}
+            >
+              <CalendarCheck size={16} color={iconColors.blue} />
+            </View>
             <Text
               className="text-lg font-bold"
               style={{ color: theme.foreground }}
             >
               {totalCheckIns}
             </Text>
-            <Text className="text-[11px] mt-0.5" style={{ color: theme.muted }}>
+            <Text className="text-[14px] mt-0.5" style={{ color: theme.muted }}>
               Check-ins
+            </Text>
+          </View>
+          <View
+            className="w-px h-10"
+            style={{ backgroundColor: theme.border }}
+          />
+          <View className="items-center">
+            <View
+              className="w-9 h-9 rounded-full items-center justify-center mb-1.5"
+              style={{ backgroundColor: `${iconColors.purple}22` }}
+            >
+              <Award size={16} color={iconColors.purple} />
+            </View>
+            <Text
+              className="text-lg font-bold"
+              style={{ color: theme.foreground }}
+            >
+              {totalPoints}
+            </Text>
+            <Text className="text-[14px] mt-0.5" style={{ color: theme.muted }}>
+              Points
             </Text>
           </View>
         </Card>
@@ -367,55 +418,39 @@ export default function ProfileScreen() {
           className="p-4 mb-4"
           style={{ backgroundColor: theme.card, borderColor: theme.border }}
         >
-          <Text
-            className="text-sm font-semibold mb-3"
-            style={{ color: theme.foreground }}
-          >
-            Your journal
-          </Text>
-          {history.map((entry, index) => (
-            <View
-              key={entry.id}
-              className="py-3"
-              style={{
-                borderBottomWidth: index < history.length - 1 ? 1 : 0,
-                borderBottomColor: theme.border,
-              }}
+          <View className="flex-row items-center justify-between mb-4">
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: theme.foreground }}
             >
-              <View className="flex-row items-center justify-between mb-1.5">
-                <Text
-                  className="text-xs font-medium"
-                  style={{ color: theme.primary }}
-                >
-                  {formatDate(entry.createdAt)}
-                </Text>
-                <View
-                  className="rounded-full px-2.5 py-1"
-                  style={{ backgroundColor: theme.primaryLight }}
-                >
-                  <Text
-                    className="text-[10px] font-medium"
-                    style={{ color: theme.primary }}
-                  >
-                    {moodLabels[entry.mood] || "Okay"}
-                  </Text>
-                </View>
-              </View>
+              Your journal
+            </Text>
+            <Pressable
+              onPress={() => router.push("/(main)/journal")}
+              className="flex-row items-center gap-0.5"
+            >
+              <Text
+                className="text-xs font-medium"
+                style={{ color: theme.primary }}
+              >
+                View all ({history.length})
+              </Text>
+              <ChevronRight size={14} color={theme.primary} />
+            </Pressable>
+          </View>
 
-              {entry.note ? (
-                <Text
-                  className="text-sm leading-5"
-                  style={{ color: theme.foreground }}
-                >
-                  {entry.note}
-                </Text>
-              ) : (
-                <Text className="text-sm italic" style={{ color: theme.muted }}>
-                  No notes for this check-in.
-                </Text>
-              )}
-            </View>
-          ))}
+          {todayEntry ? (
+            <CheckInRow
+              entry={todayEntry}
+              theme={theme}
+              showBorder={false}
+              onEdit={handleEditCheckIn}
+            />
+          ) : (
+            <Text className="text-sm" style={{ color: theme.muted }}>
+              No check-in yet today.
+            </Text>
+          )}
         </Card>
       )}
 
@@ -425,19 +460,29 @@ export default function ProfileScreen() {
         style={{ backgroundColor: theme.card, borderColor: theme.border }}
       >
         <MenuRow
-          icon={<SettingsIcon size={16} color={theme.muted} />}
+          icon={SettingsIcon}
+          color={iconColors.blue}
           label="Settings"
           onPress={() => router.push("/(main)/settings")}
           theme={theme}
         />
         <MenuRow
-          icon={<Package size={16} color={theme.muted} />}
+          icon={BookOpen}
+          color={iconColors.purple}
+          label="My Journal"
+          onPress={() => router.push("/(main)/journal")}
+          theme={theme}
+        />
+        <MenuRow
+          icon={Package}
+          color={iconColors.teal}
           label="My Products"
           onPress={() => router.push("/(main)/my-products")}
           theme={theme}
         />
         <MenuRow
-          icon={<FileText size={16} color={theme.muted} />}
+          icon={FileText}
+          color={iconColors.pink}
           label="My Posts"
           onPress={() => router.push("/(main)/my-posts")}
           theme={theme}

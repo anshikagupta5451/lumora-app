@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native'
+import { View, Pressable, ActivityIndicator } from "react-native";
+import { Text, TextInput } from "./ui/Text";
 import { Heart, MessageCircle } from 'lucide-react-native'
 import { Card } from './ui/Card'
 import { useTheme } from '../src/theme/ThemeContext'
@@ -86,7 +87,7 @@ export function PostCard({ post, onLike }: { post: Post; onLike: (id: string) =>
               <View key={c.id} className="mb-2.5">
                 <View className="flex-row items-center justify-between mb-0.5">
                   <Text className="text-xs font-semibold" style={{ color: theme.foreground }}>{c.authorName}</Text>
-                  <Text className="text-[10px]" style={{ color: theme.muted }}>{timeAgo(c.createdAt)}</Text>
+                  <Text className="text-[13px]" style={{ color: theme.muted }}>{timeAgo(c.createdAt)}</Text>
                 </View>
                 <Text className="text-xs leading-4" style={{ color: theme.muted }}>{c.content}</Text>
               </View>

@@ -1,8 +1,12 @@
 import React from 'react'
 import {
-  View, Text, TextInput, Pressable,
-  KeyboardAvoidingView, Platform, ScrollView,
-} from 'react-native'
+  View,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
+import { Text, TextInput } from "../../components/ui/Text";
 import { Link, useRouter } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -69,7 +73,7 @@ export default function SignupScreen() {
             )}
           />
           {errors.name && (
-            <Text className="text-red-500 text-[11px] mt-1 ml-0.5">{errors.name.message}</Text>
+            <Text className="text-red-500 text-[14px] mt-1 ml-0.5">{errors.name.message}</Text>
           )}
 
           <Text className="text-sm font-medium text-foreground mb-1.5 mt-3.5">Email</Text>
@@ -90,7 +94,7 @@ export default function SignupScreen() {
             )}
           />
           {errors.email && (
-            <Text className="text-red-500 text-[11px] mt-1 ml-0.5">{errors.email.message}</Text>
+            <Text className="text-red-500 text-[14px] mt-1 ml-0.5">{errors.email.message}</Text>
           )}
 
           <Text className="text-sm font-medium text-foreground mb-1.5 mt-3.5">Password</Text>
@@ -110,7 +114,7 @@ export default function SignupScreen() {
             )}
           />
           {errors.password && (
-            <Text className="text-red-500 text-[11px] mt-1 ml-0.5">{errors.password.message}</Text>
+            <Text className="text-red-500 text-[14px] mt-1 ml-0.5">{errors.password.message}</Text>
           )}
 
           <Pressable
@@ -130,7 +134,7 @@ export default function SignupScreen() {
             </Link>
           </View>
 
-          <Text className="text-[10px] text-muted text-center mt-5 leading-4">
+          <Text className="text-[13px] text-muted text-center mt-5 leading-4">
             By continuing, you agree to our Terms & Privacy Policy.
           </Text>
         </View>

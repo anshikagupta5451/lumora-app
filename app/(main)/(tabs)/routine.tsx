@@ -5,10 +5,10 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  Text,
   View,
   Alert,
 } from "react-native";
+import { Text } from "../../../components/ui/Text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Card } from "../../../components/ui/Card";
@@ -19,6 +19,7 @@ import {
   deleteRoutine,
 } from "../../../src/api/routines";
 import { useTheme } from "../../../src/theme/ThemeContext";
+import { iconColors } from "../../../src/theme/iconColors";
 
 function SectionHeader({
   label,
@@ -120,8 +121,8 @@ export default function RoutineScreen() {
   const morningRoutines = routines.filter((r) => r.timeOfDay === "morning");
   const eveningRoutines = routines.filter((r) => r.timeOfDay === "evening");
 
-  const morningColor = "#F08A5D"; // warm coral, fixed regardless of theme — reads as "morning"
-  const eveningColor = "#7C7CE0"; // cool indigo, fixed — reads as "evening"
+  const morningColor = iconColors.morning; // warm coral, fixed regardless of theme — reads as "morning"
+  const eveningColor = iconColors.evening; // cool indigo, fixed — reads as "evening"
 
   const renderRoutineGroup = (group: Routine[], sectionColor: string) =>
     group.map((routine) => {
@@ -196,7 +197,7 @@ export default function RoutineScreen() {
                   ) : (
                     <Text
                       style={{
-                        fontSize: 10,
+                        fontSize: 13,
                         fontWeight: "700",
                         color: theme.muted,
                       }}

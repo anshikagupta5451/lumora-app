@@ -1,13 +1,12 @@
 import React, { useState, useCallback } from "react";
 import {
   View,
-  Text,
   ScrollView,
   Pressable,
   ActivityIndicator,
-  TextInput,
   Modal,
 } from "react-native";
+import { Text, TextInput } from "../../../components/ui/Text";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
   Heart,
@@ -16,6 +15,7 @@ import {
   MessageCircle,
   X,
   Sparkles,
+  Bookmark as BookmarkIcon,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -23,9 +23,12 @@ import { Card } from "../../../components/ui/Card";
 import { CategoryPill } from "../../../components/CategoryPill";
 import { ImagePickerRow } from "../../../components/ImagePickerRow";
 import { PostImageGallery } from "../../../components/PhotoImageGallary";
+import { PostActionSheet } from "../../../components/PostActionSheet";
 import { useTheme } from "../../../src/theme/ThemeContext";
+import { useAuthStore } from "../../../src/store/useAuthStore";
 import {
   getPosts,
+  getBookmarkedPosts,
   createPost,
   toggleLikePost,
   uploadPostImages,
@@ -41,6 +44,8 @@ const categories = [
   "Study Hub",
   "Challenges",
 ];
+
+type FeedTab = "community" | "bookmarks";
 
 function timeAgo(dateStr: string) {
   const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
@@ -96,6 +101,12 @@ export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
 
+  // NOTE: assumes useAuthStore exposes the logged-in user's id at
+  // `user.id` — same assumption made on the post detail screen. Adjust
+  // both places together if your store shapes it differently.
+  const currentUserId = useAuthStore((s) => s.user?.id);
+
+  const [feedTab, setFeedTab] = useState<FeedTab>("community");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
@@ -106,17 +117,24 @@ export default function CommunityScreen() {
   const [imageUris, setImageUris] = useState<string[]>([]);
   const [posting, setPosting] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [actionSheetPostId, setActionSheetPostId] = useState<string | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setPosts(await getPosts(activeCategory));
+      setPosts(
+        feedTab === "bookmarks"
+          ? await getBookmarkedPosts()
+          : await getPosts(activeCategory),
+      );
     } catch {
       setPosts([]);
     } finally {
       setLoading(false);
     }
-  }, [activeCategory]);
+  }, [activeCategory, feedTab]);
 
   useFocusEffect(
     useCallback(() => {
@@ -177,6 +195,28 @@ export default function CommunityScreen() {
     }
   };
 
+  const handleBookmarkChange = (postId: string, bookmarked: boolean) => {
+    if (feedTab === "bookmarks" && !bookmarked) {
+      // Unbookmarking while viewing the Bookmarks tab — the post no
+      // longer belongs in this list at all, drop it instead of just
+      // toggling the flag.
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } else {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, bookmarkedByMe: bookmarked } : p,
+        ),
+      );
+    }
+  };
+
+  const handlePostDeleted = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    Toast.show({ type: "success", text1: "Post deleted" });
+  };
+
+  const actionSheetPost = posts.find((p) => p.id === actionSheetPostId);
+
   return (
     <View
       style={{
@@ -209,26 +249,84 @@ export default function CommunityScreen() {
         </Pressable>
       </View>
 
-      <View style={{ height: 44 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            gap: 8,
-            alignItems: "flex-start",
+      <View
+        className="px-4 flex-row items-center gap-6 mb-1"
+        style={{ borderBottomWidth: 1, borderBottomColor: theme.border }}
+      >
+        <Pressable
+          onPress={() => setFeedTab("community")}
+          style={{
+            paddingVertical: 10,
+            borderBottomWidth: 2,
+            borderBottomColor:
+              feedTab === "community" ? theme.primary : "transparent",
           }}
         >
-          {categories.map((cat) => (
-            <CategoryPill
-              key={cat}
-              label={cat}
-              active={activeCategory === cat}
-              onPress={() => setActiveCategory(cat)}
-            />
-          ))}
-        </ScrollView>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: feedTab === "community" ? "700" : "500",
+              color:
+                feedTab === "community" ? theme.foreground : theme.muted,
+            }}
+          >
+            Community
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setFeedTab("bookmarks")}
+          style={{
+            paddingVertical: 10,
+            borderBottomWidth: 2,
+            borderBottomColor:
+              feedTab === "bookmarks" ? theme.primary : "transparent",
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: feedTab === "bookmarks" ? "700" : "500",
+              color:
+                feedTab === "bookmarks" ? theme.foreground : theme.muted,
+            }}
+          >
+            Bookmarks
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => router.push("/(main)/my-posts")}
+          style={{ paddingVertical: 10 }}
+        >
+          <Text style={{ fontSize: 15, fontWeight: "500", color: theme.muted }}>
+            My posts
+          </Text>
+        </Pressable>
       </View>
+
+      {/* Category filter row only makes sense for the main community
+          feed — Bookmarks shows whatever you saved, unfiltered. */}
+      {feedTab === "community" && (
+        <View style={{ height: 44 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              gap: 8,
+              alignItems: "flex-start",
+            }}
+          >
+            {categories.map((cat) => (
+              <CategoryPill
+                key={cat}
+                label={cat}
+                active={activeCategory === cat}
+                onPress={() => setActiveCategory(cat)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {loading ? (
         <View className="items-center py-16">
@@ -240,16 +338,22 @@ export default function CommunityScreen() {
             className="w-12 h-12 rounded-full items-center justify-center mb-3"
             style={{ backgroundColor: theme.primaryLight }}
           >
-            <Sparkles size={20} color={theme.primary} />
+            {feedTab === "bookmarks" ? (
+              <BookmarkIcon size={20} color={theme.primary} />
+            ) : (
+              <Sparkles size={20} color={theme.primary} />
+            )}
           </View>
           <Text
             className="text-sm font-semibold text-center mb-1"
             style={{ color: theme.foreground }}
           >
-            Nothing here yet
+            {feedTab === "bookmarks" ? "No bookmarks yet" : "Nothing here yet"}
           </Text>
           <Text className="text-xs text-center" style={{ color: theme.muted }}>
-            Be the first to share something in this category.
+            {feedTab === "bookmarks"
+              ? "Posts you bookmark will show up here."
+              : "Be the first to share something in this category."}
           </Text>
         </View>
       ) : (
@@ -269,7 +373,11 @@ export default function CommunityScreen() {
                 borderColor: theme.border,
               }}
             >
-              <Pressable onPress={() => router.push(`/(main)/post/${post.id}`)}>
+              <Pressable
+                onPress={() => router.push(`/(main)/post/${post.id}`)}
+                onLongPress={() => setActionSheetPostId(post.id)}
+                delayLongPress={350}
+              >
                 <View className="flex-row items-center gap-2.5 mb-3">
                   <Avatar name={post.authorName} size={34} />
                   <View className="flex-1">
@@ -299,7 +407,7 @@ export default function CommunityScreen() {
                     style={{ backgroundColor: theme.primaryLight }}
                   >
                     <Text
-                      className="text-[10px] font-semibold"
+                      className="text-[13px] font-semibold"
                       style={{ color: theme.primary }}
                     >
                       {post.category}
@@ -351,19 +459,51 @@ export default function CommunityScreen() {
                   onPress={() => router.push(`/(main)/post/${post.id}`)}
                   icon={<MessageCircle size={13} color={theme.muted} />}
                 />
+                {post.bookmarkedByMe && (
+                  <BookmarkIcon
+                    size={14}
+                    color={theme.primary}
+                    fill={theme.primary}
+                    style={{ marginLeft: "auto" }}
+                  />
+                )}
               </View>
             </Card>
           ))}
         </ScrollView>
       )}
 
-      {/* Compose modal */}
-      <Modal
-        visible={composing}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setComposing(false)}
-      >
+      {/* Long-press action sheet — Bookmark, Copy text, Report, Delete
+          (own posts only), Close. */}
+      {actionSheetPost && (
+        <PostActionSheet
+          visible
+          onClose={() => setActionSheetPostId(null)}
+          postId={actionSheetPost.id}
+          postContent={actionSheetPost.content}
+          isBookmarked={actionSheetPost.bookmarkedByMe}
+          isOwnPost={
+            Boolean(currentUserId) && actionSheetPost.userId === currentUserId
+          }
+          theme={theme}
+          onBookmarkChange={(bookmarked) =>
+            handleBookmarkChange(actionSheetPost.id, bookmarked)
+          }
+          onDeleted={() => handlePostDeleted(actionSheetPost.id)}
+        />
+      )}
+
+      {/* Compose modal — only mounted while open. RN's Modal doesn't
+          reliably unmount itself on web when visible={false}, which
+          leaves stray content behind; wrapping it in {composing && ...}
+          guarantees it's gone from the DOM entirely when closed. */}
+      {composing && (
+        <Modal
+          visible
+          animationType="slide"
+          transparent
+          onRequestClose={() => setComposing(false)}
+        >
         <View
           className="flex-1 justify-end"
           style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
@@ -461,11 +601,7 @@ export default function CommunityScreen() {
                 multiline
               />
 
-              <ImagePickerRow
-                uris={imageUris}
-                onChange={setImageUris}
-                theme={theme}
-              />
+              <ImagePickerRow uris={imageUris} onChange={setImageUris} theme={theme} />
 
               <Pressable
                 onPress={handlePost}
@@ -489,7 +625,8 @@ export default function CommunityScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+        </Modal>
+      )}
     </View>
   );
 }

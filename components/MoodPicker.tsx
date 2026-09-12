@@ -1,13 +1,20 @@
 import React from "react";
-import { View, Pressable, Text } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "./ui/Text";
 
-const moods = [
-  { value: 1, emoji: "😞" },
-  { value: 2, emoji: "😕" },
-  { value: 3, emoji: "😐" },
-  { value: 4, emoji: "🙂" },
-  { value: 5, emoji: "😄" },
+// Colors are fixed regardless of theme so a mood always reads the same way,
+// the same reasoning as the morning/evening colors on the routine screen.
+export const moods = [
+  { value: 1, emoji: "😞", label: "Struggling", color: "#E4645A" },
+  { value: 2, emoji: "😕", label: "Not great", color: "#EF9758" },
+  { value: 3, emoji: "😐", label: "Okay", color: "#EBBE4F" },
+  { value: 4, emoji: "🙂", label: "Good", color: "#8FC15D" },
+  { value: 5, emoji: "😄", label: "Great", color: "#4CAF87" },
 ];
+
+export function getMood(value: number) {
+  return moods.find((m) => m.value === value) || moods[2];
+}
 
 export function MoodPicker({
   value,

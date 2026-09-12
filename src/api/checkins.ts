@@ -39,3 +39,17 @@ export function getTodayCheckIn() {
 export function getCheckInHistory() {
   return apiFetch<CheckIn[]>("/checkins/history");
 }
+
+export function deleteCheckIn(id: string) {
+  return apiFetch(`/checkins/${id}`, { method: "DELETE" });
+}
+
+export function updateCheckIn(
+  id: string,
+  updates: { mood?: number; note?: string },
+) {
+  return apiFetch<CheckIn>(`/checkins/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+}

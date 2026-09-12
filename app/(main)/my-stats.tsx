@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, Pressable, ActivityIndicator } from 'react-native'
+import { View, Pressable, ActivityIndicator } from "react-native";
+import { Text } from "../../components/ui/Text";
 import { useRouter } from 'expo-router'
 import { X, Zap } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Card } from '../../components/ui/Card'
 import { useTheme } from '../../src/theme/ThemeContext'
 import { getMyStats, UserStats } from '../../src/api/checkins'
+import { getBounties } from '../../src/api/bounties'
 
 function StatCard({ value, label, theme }: { value: number; label: string; theme: any }) {
   return (
@@ -31,9 +33,11 @@ export default function MyStatsScreen() {
   const { theme } = useTheme()
   const [stats, setStats] = useState<UserStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [totalPoints, setTotalPoints] = useState(0)
 
   useEffect(() => {
     getMyStats().then(setStats).catch(() => setStats(null)).finally(() => setLoading(false))
+    getBounties().then((data) => setTotalPoints(data.totalPoints)).catch(() => {})
   }, [])
 
   return (
@@ -71,6 +75,7 @@ export default function MyStatsScreen() {
           <View className="flex-row gap-3 mb-8">
             <StatCard value={stats.totalCheckIns} label="Total check-ins" theme={theme} />
             <StatCard value={stats.reviewsWritten} label="Reviews written" theme={theme} />
+            <StatCard value={totalPoints} label="Bounty points" theme={theme} />
           </View>
 
           <Text className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: theme.muted }}>

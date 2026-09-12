@@ -11,10 +11,9 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
   View,
 } from "react-native";
+import { Text, TextInput } from "../../../components/ui/Text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { FilterChip } from "../../../components/FilterChip";
@@ -135,7 +134,7 @@ export default function ExploreScreen() {
         >
           <Sparkles size={12} color={theme.primary} />
           <Text
-            className="text-[10px] font-semibold uppercase tracking-wide"
+            className="text-[13px] font-semibold uppercase tracking-wide"
             style={{ color: theme.primary }}
           >
             Community Reviews
@@ -192,7 +191,7 @@ export default function ExploreScreen() {
           style={{ backgroundColor: theme.card, borderColor: theme.border }}
         >
           <Text
-            className="text-[10px] uppercase"
+            className="text-[13px] uppercase"
             style={{ color: theme.muted }}
           >
             Total Reviews
@@ -241,7 +240,7 @@ export default function ExploreScreen() {
               className="rounded-full w-4 h-4 items-center justify-center"
               style={{ backgroundColor: theme.primary }}
             >
-              <Text className="text-white text-[9px] font-bold">
+              <Text className="text-white text-[13px] font-bold">
                 {activeFilterCount}
               </Text>
             </View>

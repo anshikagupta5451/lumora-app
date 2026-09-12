@@ -1,17 +1,21 @@
 import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  TextInput,
-} from "react-native";
-import { useFocusEffect } from "expo-router";
+import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { Text, TextInput } from "../../../components/ui/Text";
+import { useFocusEffect, useRouter } from "expo-router";
 import { getCurrentLocation } from "../../../src/lib/location";
 import { getCurrentWeather, WeatherData } from "../../../src/api/weather";
 import { LinearGradient } from "expo-linear-gradient";
-import { Flame, ThumbsUp, ThumbsDown, Sun } from "lucide-react-native";
+import {
+  Flame,
+  ThumbsUp,
+  ThumbsDown,
+  Sun,
+  Moon,
+  Award,
+  CheckCircle2,
+  ListChecks,
+  ChevronRight,
+} from "lucide-react-native";
 import Toast from "react-native-toast-message";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card } from "../../../components/ui/Card";
@@ -23,15 +27,19 @@ import {
   generateRecommendation,
   submitRecommendationFeedback,
   RecommendationResponse,
-} from "../../../src/api/recommedations";
+} from "../../../src/api/recommendations";
 import {
   submitCheckIn,
   getStreak,
   getTodayCheckIn,
 } from "../../../src/api/checkins";
+import { getBounties, Bounty } from "../../../src/api/bounties";
+import { getMyRoutines, Routine } from "../../../src/api/routines";
+import { iconColors } from "../../../src/theme/iconColors";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
 
   const [recommendation, setRecommendation] =
@@ -47,6 +55,9 @@ export default function HomeScreen() {
   const [note, setNote] = useState("");
   const [submittingCheckIn, setSubmittingCheckIn] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [bounties, setBounties] = useState<Bounty[]>([]);
+  const [bountyPoints, setBountyPoints] = useState(0);
+  const [routines, setRoutines] = useState<Routine[]>([]);
 
   const { theme } = useTheme();
 
@@ -88,6 +99,20 @@ export default function HomeScreen() {
       ]);
       setStreak(streakData.streak);
       setCheckedInToday(Boolean(todayCheckIn));
+    } catch {
+      // fail silently
+    }
+
+    try {
+      const bountiesData = await getBounties();
+      setBounties(bountiesData.bounties);
+      setBountyPoints(bountiesData.totalPoints);
+    } catch {
+      // fail silently
+    }
+
+    try {
+      setRoutines(await getMyRoutines());
     } catch {
       // fail silently
     }
@@ -251,13 +276,105 @@ export default function HomeScreen() {
           </Card>
         )}
 
+        {routines.length > 0 && (
+          <Card
+            className="mt-4 p-4"
+            style={{ backgroundColor: theme.card, borderColor: theme.border }}
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="flex-row items-center gap-2">
+                <View
+                  className="w-8 h-8 rounded-full items-center justify-center"
+                  style={{ backgroundColor: `${iconColors.blue}22` }}
+                >
+                  <ListChecks size={15} color={iconColors.blue} />
+                </View>
+                <Text
+                  className="text-sm font-semibold"
+                  style={{ color: theme.foreground }}
+                >
+                  Your Routines
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => router.push("/(main)/(tabs)/routine")}
+                className="flex-row items-center gap-0.5"
+              >
+                <Text
+                  className="text-xs font-medium"
+                  style={{ color: theme.primary }}
+                >
+                  View all
+                </Text>
+                <ChevronRight size={14} color={theme.primary} />
+              </Pressable>
+            </View>
+
+            <View className="gap-2.5">
+              {routines.map((routine) => {
+                const totalSteps = routine.steps.length;
+                const completedSteps = routine.steps.filter(
+                  (s) => s.completed,
+                ).length;
+                const routineColor =
+                  routine.timeOfDay === "morning"
+                    ? iconColors.morning
+                    : iconColors.evening;
+                return (
+                  <Pressable
+                    key={routine.id}
+                    onPress={() => router.push("/(main)/(tabs)/routine")}
+                    className="flex-row items-center gap-2.5 rounded-xl p-3"
+                    style={{
+                      backgroundColor: theme.background,
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                    }}
+                  >
+                    <View
+                      className="w-8 h-8 rounded-full items-center justify-center"
+                      style={{ backgroundColor: `${routineColor}22` }}
+                    >
+                      {routine.timeOfDay === "morning" ? (
+                        <Sun size={15} color={routineColor} />
+                      ) : (
+                        <Moon size={15} color={routineColor} />
+                      )}
+                    </View>
+                    <View className="flex-1">
+                      <Text
+                        className="text-sm font-medium"
+                        style={{ color: theme.foreground }}
+                      >
+                        {routine.name}
+                      </Text>
+                      <Text
+                        className="text-xs mt-0.5"
+                        style={{ color: theme.muted }}
+                      >
+                        {completedSteps}/{totalSteps} steps done today
+                      </Text>
+                    </View>
+                    <ChevronRight size={16} color={theme.muted} />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Card>
+        )}
+
         {weather && (
           <Card
             className="mt-4 p-4 flex-row items-center justify-between"
             style={{ backgroundColor: theme.card, borderColor: theme.border }}
           >
             <View className="flex-row items-center gap-2">
-              <Sun size={20} color={theme.primary} />
+              <View
+                className="w-9 h-9 rounded-full items-center justify-center"
+                style={{ backgroundColor: `${iconColors.amber}22` }}
+              >
+                <Sun size={18} color={iconColors.amber} />
+              </View>
               <View>
                 <Text
                   className="text-sm font-medium"
@@ -265,10 +382,94 @@ export default function HomeScreen() {
                 >
                   {weather.temp}°C · {weather.condition}
                 </Text>
-                <Text className="text-[11px]" style={{ color: theme.muted }}>
+                <Text className="text-[14px]" style={{ color: theme.muted }}>
                   Humidity {weather.humidity}%
                 </Text>
               </View>
+            </View>
+          </Card>
+        )}
+
+        {bounties.length > 0 && (
+          <Card
+            className="mt-4 p-4"
+            style={{ backgroundColor: theme.card, borderColor: theme.border }}
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="flex-row items-center gap-2">
+                <View
+                  className="w-8 h-8 rounded-full items-center justify-center"
+                  style={{ backgroundColor: `${iconColors.amber}22` }}
+                >
+                  <Award size={15} color={iconColors.amber} />
+                </View>
+                <Text
+                  className="text-sm font-semibold"
+                  style={{ color: theme.foreground }}
+                >
+                  Bounties
+                </Text>
+              </View>
+              <View
+                className="rounded-full px-2.5 py-1"
+                style={{ backgroundColor: `${iconColors.amber}22` }}
+              >
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: iconColors.amber }}
+                >
+                  {bountyPoints} pts
+                </Text>
+              </View>
+            </View>
+
+            <View className="gap-2.5">
+              {bounties.map((bounty) => (
+                <View
+                  key={bounty.id}
+                  className="flex-row items-start gap-2.5 rounded-xl p-3"
+                  style={{
+                    backgroundColor: bounty.completed
+                      ? `${iconColors.green}18`
+                      : theme.background,
+                    borderWidth: 1,
+                    borderColor: bounty.completed
+                      ? iconColors.green
+                      : theme.border,
+                  }}
+                >
+                  <CheckCircle2
+                    size={18}
+                    color={bounty.completed ? iconColors.green : theme.muted}
+                    fill={bounty.completed ? iconColors.green : "transparent"}
+                  />
+                  <View className="flex-1">
+                    <Text
+                      className="text-sm font-medium"
+                      style={{
+                        color: theme.foreground,
+                        textDecorationLine: bounty.completed
+                          ? "line-through"
+                          : "none",
+                      }}
+                    >
+                      {bounty.title}
+                    </Text>
+                    <Text
+                      className="text-xs mt-0.5"
+                      style={{ color: theme.muted }}
+                    >
+                      {bounty.description}
+                    </Text>
+                  </View>
+                  <Text
+                    className="text-xs font-semibold"
+                    style={{ color: iconColors.amber }}
+                  >
+                    +{bounty.rewardPoints}
+                  </Text>
+                </View>
+              ))}
             </View>
           </Card>
         )}
@@ -311,7 +512,7 @@ export default function HomeScreen() {
               {recommendation.productName}
             </Text>
             <Text
-              className="text-[11px] uppercase mt-0.5"
+              className="text-[14px] uppercase mt-0.5"
               style={{ color: theme.muted }}
             >
               {recommendation.brand}
@@ -324,7 +525,7 @@ export default function HomeScreen() {
             </Text>
 
             {recommendation.weatherUsed && (
-              <Text className="text-[10px] mt-2" style={{ color: theme.muted }}>
+              <Text className="text-[13px] mt-2" style={{ color: theme.muted }}>
                 Generated using {recommendation.weatherUsed.temp}°C,{" "}
                 {recommendation.weatherUsed.humidity}% humidity
               </Text>

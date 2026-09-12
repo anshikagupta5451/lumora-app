@@ -1,5 +1,6 @@
 import React from 'react'
-import { Pressable, Text } from 'react-native'
+import { Pressable } from "react-native";
+import { Text } from "./Text";
 
 type Variant = 'default' | 'outline' | 'ghost'
 

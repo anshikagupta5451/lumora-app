@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
-  TextInput,
   Pressable,
   ScrollView,
   Switch,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, Sparkles, Heart } from "lucide-react-native";
+import { Text, TextInput } from "../../components/ui/Text";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { ChevronLeft, Sparkles, Heart, ScanLine } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Card } from "../../components/ui/Card";
@@ -19,6 +18,7 @@ import { StarRatingInput } from "../../components/StarRatingInput";
 import { getProducts, Product } from "../../src/api/products";
 import { submitReview } from "../../src/api/reviews";
 import { useTheme } from "../../src/theme/ThemeContext";
+import { useScanStore } from "../../src/store/useScanStore";
 
 const skinOptions = ["Oily", "Dry", "Normal", "Combo", "Sensitive"];
 const concernOptions = [
@@ -75,6 +75,19 @@ export default function ShareReviewScreen() {
         .catch(() => {});
     }
   }, [preselectedId]);
+
+  // Pick up a barcode scan result handed back by the scanner screen
+  useFocusEffect(
+    React.useCallback(() => {
+      const scanned = useScanStore.getState().scannedProduct;
+      if (scanned) {
+        setSelectedProduct(scanned);
+        setSource("existing");
+        setQuery(scanned.name);
+        useScanStore.getState().setScannedProduct(null);
+      }
+    }, []),
+  );
 
   useEffect(() => {
     if (source !== "existing" || !query.trim() || selectedProduct) {
@@ -178,7 +191,7 @@ export default function ShareReviewScreen() {
           >
             <Sparkles size={12} color={theme.primary} />
             <Text
-              className="text-[10px] font-bold uppercase tracking-widest"
+              className="text-[13px] font-bold uppercase tracking-widest"
               style={{ color: theme.primary }}
             >
               Step into the spotlight
@@ -257,22 +270,37 @@ export default function ShareReviewScreen() {
 
           {source === "existing" ? (
             <View>
-              <TextInput
-                className="rounded-xl px-3.5 py-3 text-sm mb-2"
-                style={{
-                  borderWidth: 1,
-                  borderColor: theme.border,
-                  backgroundColor: theme.background,
-                  color: theme.foreground,
-                }}
-                placeholder="Search products..."
-                placeholderTextColor={theme.muted}
-                value={query}
-                onChangeText={(text) => {
-                  setQuery(text);
-                  setSelectedProduct(null);
-                }}
-              />
+              <View className="flex-row items-center gap-2 mb-2">
+                <TextInput
+                  className="flex-1 rounded-xl px-3.5 py-3 text-sm"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: theme.border,
+                    backgroundColor: theme.background,
+                    color: theme.foreground,
+                  }}
+                  placeholder="Search products..."
+                  placeholderTextColor={theme.muted}
+                  value={query}
+                  onChangeText={(text) => {
+                    setQuery(text);
+                    setSelectedProduct(null);
+                  }}
+                />
+                <Pressable
+                  onPress={() =>
+                    router.push("/(main)/scan-product?returnTo=share-review")
+                  }
+                  className="w-12 h-12 rounded-xl items-center justify-center"
+                  style={{
+                    backgroundColor: theme.primaryLight,
+                    borderWidth: 1,
+                    borderColor: theme.primary,
+                  }}
+                >
+                  <ScanLine size={18} color={theme.primary} />
+                </Pressable>
+              </View>
               {!selectedProduct &&
                 results.map((p) => (
                   <Pressable

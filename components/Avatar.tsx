@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text } from 'react-native'
+import { View } from "react-native";
+import { Text } from "./ui/Text";
 
 const avatarColors = [
   '#F97316', '#8B5CF6', '#0EA5E9', '#10B981',

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
   Image,
   Pressable,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   Modal,
   StyleSheet,
 } from "react-native";
+import { Text } from "./ui/Text";
 import { X } from "lucide-react-native";
 
 interface Props {
@@ -16,20 +16,17 @@ interface Props {
   variant: "feed" | "detail";
 }
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
 
-// Feed cards get a compact grid preview (max 4 visible + "+N" overlay on
-// the last tile). Post detail gets a full-width horizontal swipeable
-// gallery with a tap-to-zoom lightbox.
 export function PostImageGallery({ images, variant }: Props) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const { width: screenWidth } = useWindowDimensions();
 
   if (!images || images.length === 0) return null;
 
   if (variant === "feed") {
     const shown = images.slice(0, 4);
     const extra = images.length - shown.length;
-    const cardWidth = SCREEN_WIDTH - 64; // approx card width minus padding
+    const cardWidth = screenWidth - 64; // approx card width minus padding
     const cols = shown.length === 1 ? 1 : 2;
     const gap = 4;
     const tileSize = (cardWidth - gap * (cols - 1)) / cols;
@@ -37,8 +34,15 @@ export function PostImageGallery({ images, variant }: Props) {
     return (
       <View style={styles.feedGrid}>
         {shown.map((uri, i) => (
-          <View key={uri} style={{ width: tileSize, height: tileSize }}>
-            <Image source={{ uri }} style={styles.tileImage} resizeMode="cover" />
+          <View
+            key={uri}
+            style={{ width: tileSize, height: tileSize, overflow: "hidden" }}
+          >
+            <Image
+              source={{ uri }}
+              style={{ width: tileSize, height: tileSize }}
+              resizeMode="cover"
+            />
             {i === shown.length - 1 && extra > 0 && (
               <View style={styles.overlay}>
                 <Text style={styles.overlayText}>+{extra}</Text>
@@ -51,7 +55,7 @@ export function PostImageGallery({ images, variant }: Props) {
   }
 
   // detail variant — full-width swipeable gallery + tap-to-zoom lightbox
-  const size = SCREEN_WIDTH - 32;
+  const size = screenWidth - 32;
 
   return (
     <>
@@ -89,7 +93,7 @@ export function PostImageGallery({ images, variant }: Props) {
           {viewerIndex !== null && (
             <Image
               source={{ uri: images[viewerIndex] }}
-              style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH }}
+              style={{ width: screenWidth, height: screenWidth }}
               resizeMode="contain"
             />
           )}
@@ -107,10 +111,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     overflow: "hidden",
-  },
-  tileImage: {
-    width: "100%",
-    height: "100%",
   },
   overlay: {
     position: "absolute",

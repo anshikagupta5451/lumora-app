@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { Text } from "./ui/Text";
 import { Star, ShieldCheck } from "lucide-react-native";
 import { Card } from "./ui/Card";
 import { Review } from "../src/api/reviews";
@@ -16,7 +17,7 @@ export function ReviewCard({ review }: { review: Review }) {
       <View className="flex-row justify-between items-start mb-1.5">
         <View className="flex-1 pr-2">
           <Text
-            className="text-[11px] uppercase"
+            className="text-[14px] uppercase"
             style={{ color: theme.muted }}
           >
             {review.brand}
@@ -61,7 +62,7 @@ export function ReviewCard({ review }: { review: Review }) {
             }}
           >
             <Text
-              className="text-[10px] font-medium"
+              className="text-[13px] font-medium"
               style={{ color: theme.primary }}
             >
               {review.skinType} skin
@@ -79,7 +80,7 @@ export function ReviewCard({ review }: { review: Review }) {
             }}
           >
             <Text
-              className="text-[10px] font-medium"
+              className="text-[13px] font-medium"
               style={{ color: theme.muted }}
             >
               {c}
@@ -92,13 +93,13 @@ export function ReviewCard({ review }: { review: Review }) {
         className="flex-row items-center justify-between mt-3 pt-3"
         style={{ borderTopWidth: 1, borderTopColor: theme.border }}
       >
-        <Text className="text-[11px]" style={{ color: theme.muted }}>
+        <Text className="text-[14px]" style={{ color: theme.muted }}>
           {review.reviewer}
         </Text>
         {review.verified && (
           <View className="flex-row items-center gap-1">
             <ShieldCheck size={12} color={theme.muted} />
-            <Text className="text-[10px]" style={{ color: theme.muted }}>
+            <Text className="text-[13px]" style={{ color: theme.muted }}>
               Verified
             </Text>
           </View>

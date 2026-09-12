@@ -14,8 +14,6 @@
     "android": {
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
       ],
       "adaptiveIcon": {
@@ -49,7 +47,54 @@
       ],
       "expo-secure-store",
       "expo-notifications",
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Plus Jakarta Sans",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/PlusJakartaSans_400Regular.ttf",
+                    "weight": 400,
+                    "style": "normal"
+                  },
+                  {
+                    "path": "./assets/fonts/PlusJakartaSans_500Medium.ttf",
+                    "weight": 500,
+                    "style": "normal"
+                  },
+                  {
+                    "path": "./assets/fonts/PlusJakartaSans_600SemiBold.ttf",
+                    "weight": 600,
+                    "style": "normal"
+                  },
+                  {
+                    "path": "./assets/fonts/PlusJakartaSans_700Bold.ttf",
+                    "weight": 700,
+                    "style": "normal"
+                  },
+                  {
+                    "path": "./assets/fonts/PlusJakartaSans_800ExtraBold.ttf",
+                    "weight": 800,
+                    "style": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          "ios": {
+            "fonts": [
+              "./assets/fonts/PlusJakartaSans_400Regular.ttf",
+              "./assets/fonts/PlusJakartaSans_500Medium.ttf",
+              "./assets/fonts/PlusJakartaSans_600SemiBold.ttf",
+              "./assets/fonts/PlusJakartaSans_700Bold.ttf",
+              "./assets/fonts/PlusJakartaSans_800ExtraBold.ttf"
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

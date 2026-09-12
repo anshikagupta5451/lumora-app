@@ -18,6 +18,7 @@ export interface AddUserProductInput {
   productId?: string
   customName?: string
   customBrand?: string
+  category?: string
   openedAt?: string
   expiresAt?: string
   quantityTotal?: number

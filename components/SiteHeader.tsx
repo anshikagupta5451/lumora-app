@@ -1,7 +1,8 @@
 import { Link, useRouter } from "expo-router";
 import { LogOut, User as UserIcon } from "lucide-react-native";
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Text } from "./ui/Text";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "../src/store/useAuthStore";
 import { Button } from "./ui/Button";
@@ -26,7 +27,7 @@ export function SiteHeader() {
 
   return (
     <View className="flex-row items-center justify-between px-4 py-3 border-b border-border bg-background">
-      <Link href="/(main)/home" asChild>
+      <Link href="/(main)/(tabs)/home" asChild>
         <Pressable className="flex-row items-center gap-2">
           <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary">
             <Text className="text-white text-sm font-bold">LU</Text>
@@ -35,7 +36,7 @@ export function SiteHeader() {
             <Text className="text-sm font-semibold text-foreground">
               Lumora
             </Text>
-            <Text className="text-[10px] text-muted-foreground">
+            <Text className="text-[13px] text-muted-foreground">
               AI Beauty Companion
             </Text>
           </View>
@@ -44,7 +45,7 @@ export function SiteHeader() {
 
       {isAuthenticated ? (
         <View className="flex-row items-center gap-3">
-          <Link href="/(main)/my-reviews" asChild>
+          <Link href="/(main)/(tabs)/profile" asChild>
             <Pressable className="flex-row items-center gap-2">
               <View className="h-9 w-9 items-center justify-center rounded-full bg-primary/15 border border-border">
                 {user?.name ? (

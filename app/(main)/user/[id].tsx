@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, ActivityIndicator, Pressable } from 'react-native'
+import { View, ActivityIndicator, Pressable } from "react-native";
+import { Text } from "../../../components/ui/Text";
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ChevronLeft } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -44,7 +45,7 @@ export default function UserProfileScreen() {
             <Text style={{ color: theme.foreground, fontSize: 20, fontWeight: '800', marginTop: 10 }}>
               {profile.name}
             </Text>
-            <Text style={{ color: theme.muted, fontSize: 12, marginTop: 2 }}>
+            <Text style={{ color: theme.muted, fontSize: 14, marginTop: 2 }}>
               Member since {new Date(profile.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </Text>
           </View>
@@ -52,11 +53,11 @@ export default function UserProfileScreen() {
           <View className="flex-row gap-3">
             <Card className="flex-1 items-center py-4" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
               <Text style={{ color: theme.foreground, fontSize: 22, fontWeight: '800' }}>{profile.postCount}</Text>
-              <Text style={{ color: theme.muted, fontSize: 11, marginTop: 2 }}>Posts</Text>
+              <Text style={{ color: theme.muted, fontSize: 13, marginTop: 2 }}>Posts</Text>
             </Card>
             <Card className="flex-1 items-center py-4" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
               <Text style={{ color: theme.foreground, fontSize: 22, fontWeight: '800' }}>{profile.reviewCount}</Text>
-              <Text style={{ color: theme.muted, fontSize: 11, marginTop: 2 }}>Reviews</Text>
+              <Text style={{ color: theme.muted, fontSize: 13, marginTop: 2 }}>Reviews</Text>
             </Card>
           </View>
         </View>
