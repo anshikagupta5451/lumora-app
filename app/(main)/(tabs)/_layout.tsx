@@ -9,6 +9,8 @@ import {
   PackagePlus,
   Star,
   ScanLine,
+  ScanFace,
+  Camera,
   ChevronRight,
 } from "lucide-react-native";
 import React, { useState } from "react";
@@ -23,6 +25,18 @@ function QuickActionSheet({ visible, onClose, theme }: any) {
   const router = useRouter();
 
   const actions = [
+    {
+      label: "Log a skin check-in",
+      route: "/(main)/(tabs)/home",
+      icon: Camera,
+      color: iconColors.purple,
+    },
+    {
+      label: "Scan your face",
+      route: "/(main)/face-scan",
+      icon: ScanFace,
+      color: iconColors.pink,
+    },
     {
       label: "Create routine",
       route: "/(main)/routine-builder",

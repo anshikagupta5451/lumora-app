@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Pressable, View } from "react-native";
+import { Alert, Image, Pressable, View } from "react-native";
 import { Trash2, Pencil } from "lucide-react-native";
 import { Text, TextInput } from "./ui/Text";
 import { CheckIn } from "../src/api/checkins";
@@ -197,6 +197,19 @@ export function CheckInRow({
             No notes for this check-in.
           </Text>
         )}
+
+        {entry.images?.length > 0 ? (
+          <View className="flex-row flex-wrap gap-2 mt-3">
+            {entry.images.map((uri, index) => (
+              <Image
+                key={`${entry.id}-${uri}`}
+                source={{ uri }}
+                accessibilityLabel={`Check-in photo ${index + 1}`}
+                style={{ width: 76, height: 76, borderRadius: 12, backgroundColor: theme.background }}
+              />
+            ))}
+          </View>
+        ) : null}
       </View>
 
       {editable && (

@@ -15,3 +15,10 @@ export function saveSkinProfile(data: SkinProfileInput) {
 export function getMySkinProfile() {
   return apiFetch('/skin-profile/me')
 }
+
+export function updateMonthlyBudget(monthlyBudget: number) {
+  return apiFetch('/skin-profile/budget', {
+    method: 'PATCH',
+    body: JSON.stringify({ monthlyBudget }),
+  })
+}

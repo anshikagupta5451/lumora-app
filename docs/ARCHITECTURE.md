@@ -89,13 +89,14 @@ One file per resource in `src/api/`, each exporting thin typed functions:
 | --- | --- |
 | `auth.ts` | `POST /auth/login`, `/auth/signup` |
 | `checkins.ts` | `/checkins`, `/checkins/today`, `/checkins/history`, `/checkins/stats` |
+| `faceScan.ts` | `POST /face-scan/analyze`, `/face-scan/latest` |
 | `ingredients.ts` | `/ingredients`, `/ingredients/:name` |
 | `posts.ts` | `/posts`, `/posts/:id`, `/like`, `/bookmark`, `/comments`, `/posts/mine/all`, `/posts/bookmarked/all`, `POST /uploads/images` |
 | `products.ts` | `/products`, `/products/:id`, `/products/barcode/:code` |
-| `recommendations.ts` | `/recommendations/latest`, `/generate`, `/:id/feedback` |
+| `recommendations.ts` | `/recommendations/latest`, `/generate`, `/from-scan`, `/:id/feedback` |
 | `reviews.ts` | `/reviews` |
 | `routines.ts` | `/routines`, `/routines/me`, `/routine-steps/:id/log` |
-| `skinProfile.ts` | `/skin-profile`, `/skin-profile/me` |
+| `skinProfile.ts` | `/skin-profile`, `/skin-profile/me`, `PATCH /skin-profile/budget` |
 | `userProducts.ts` | `/user-products`, `/user-products/:id` |
 | `users.ts` | `/users/me`, `/users/:id/public`, `/users/push-token` |
 | `weather.ts` | `/weather/current?lat=&lon=` |
@@ -159,6 +160,7 @@ Embedded weights are 400, 500, 600, 700, 800. A `fontWeight` outside that set fa
 | Location | [src/lib/location.ts](../src/lib/location.ts) | `getCurrentLocation()` requests foreground permission, returns `{lat, lon}` or `null`. Feeds the weather-based recommendation on the home screen. |
 | Push | [src/lib/notifications.ts](../src/lib/notifications.ts) | Requests permission, gets an Expo push token using the EAS `projectId` from `expo-constants`, creates the Android `default` channel, registers the token with the backend. Bails out on web, on simulators (`!Device.isDevice`), and when permission is denied. |
 | Camera | `app/(main)/scan-product.tsx` | `expo-camera` barcode scan → `/products/barcode/:code`. |
+| Camera | `app/(main)/face-scan.tsx` | `expo-camera` front-facing selfie against an oval guide → `/face-scan/analyze`. Backend does heuristic (non-ML) pixel analysis, see `lumora-backend/src/lib/faceAnalysis.ts`. |
 | Images | `expo-image-picker` → `uploadPostImages` | Post composer and review flows. |
 | Secure storage | `useAuthStore`, `ThemeContext` | Tokens, user JSON, theme name. |
 

@@ -1,5 +1,5 @@
-import { Platform } from "react-native";
 import { apiFetch } from "./client";
+import { uploadImages } from "./uploads";
 
 export interface Post {
   id: string;
@@ -103,37 +103,5 @@ export function getComments(postId: string) {
 }
 
 export async function uploadPostImages(uris: string[]): Promise<string[]> {
-  const formData = new FormData();
-
-  if (Platform.OS === "web") {
-    // On web, expo-image-picker returns blob:/data: URLs, not native
-    // file paths — these have to be fetched into real Blob objects
-    // before FormData can send them. The RN { uri, name, type } shape
-    // below only works on native, where fetch treats it as a file
-    // reference rather than trying to serialize it as JSON.
-    await Promise.all(
-      uris.map(async (uri, i) => {
-        const res = await fetch(uri);
-        const blob = await res.blob();
-        formData.append("images", blob, `photo${i}.jpg`);
-      }),
-    );
-  } else {
-    uris.forEach((uri, i) => {
-      const filename = uri.split("/").pop() || `photo${i}.jpg`;
-      const ext = filename.split(".").pop()?.toLowerCase();
-      const type = ext === "png" ? "image/png" : "image/jpeg";
-      formData.append("images", {
-        uri,
-        name: filename,
-        type,
-      } as any);
-    });
-  }
-
-  const data = await apiFetch<{ urls: string[] }>("/uploads/images", {
-    method: "POST",
-    body: formData,
-  });
-  return data.urls;
+  return uploadImages(uris);
 }

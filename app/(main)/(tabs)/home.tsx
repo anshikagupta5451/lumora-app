@@ -15,11 +15,13 @@ import {
   CheckCircle2,
   ListChecks,
   ChevronRight,
+  ScanFace,
 } from "lucide-react-native";
 import Toast from "react-native-toast-message";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card } from "../../../components/ui/Card";
 import { MoodPicker } from "../../../components/MoodPicker";
+import { ImagePickerRow } from "../../../components/ImagePickerRow";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useTheme } from "../../../src/theme/ThemeContext";
 import {
@@ -30,9 +32,18 @@ import {
 } from "../../../src/api/recommendations";
 import {
   submitCheckIn,
+  updateCheckIn,
   getStreak,
   getTodayCheckIn,
+  CheckIn,
 } from "../../../src/api/checkins";
+import { uploadImages } from "../../../src/api/uploads";
+import { getMyProfile } from "../../../src/api/users";
+import {
+  getLocalCheckInPhotos,
+  saveLocalCheckInPhotos,
+  supportsLocalCheckInPhotos,
+} from "../../../src/lib/localCheckInPhotos";
 import { getBounties, Bounty } from "../../../src/api/bounties";
 import { getMyRoutines, Routine } from "../../../src/api/routines";
 import { iconColors } from "../../../src/theme/iconColors";
@@ -41,6 +52,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const isPremium = Boolean(user?.isPremium);
+  const useCloudPhotos = isPremium || !supportsLocalCheckInPhotos;
 
   const [recommendation, setRecommendation] =
     useState<RecommendationResponse | null>(null);
@@ -51,9 +65,13 @@ export default function HomeScreen() {
 
   const [streak, setStreak] = useState(0);
   const [checkedInToday, setCheckedInToday] = useState(false);
+  const [todayCheckIn, setTodayCheckIn] = useState<CheckIn | null>(null);
   const [mood, setMood] = useState<number | null>(null);
   const [note, setNote] = useState("");
+  const [imageUris, setImageUris] = useState<string[]>([]);
+  const [savedImages, setSavedImages] = useState<string[]>([]);
   const [submittingCheckIn, setSubmittingCheckIn] = useState(false);
+  const [savingPhotos, setSavingPhotos] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [bountyPoints, setBountyPoints] = useState(0);
@@ -93,12 +111,29 @@ export default function HomeScreen() {
     }
 
     try {
-      const [streakData, todayCheckIn] = await Promise.all([
+      const [streakData, todayCheckInData, profile] = await Promise.all([
         getStreak(),
         getTodayCheckIn(),
+        getMyProfile().catch(() => null),
       ]);
       setStreak(streakData.streak);
-      setCheckedInToday(Boolean(todayCheckIn));
+      setCheckedInToday(Boolean(todayCheckInData));
+      setTodayCheckIn(todayCheckInData);
+      if (profile) updateUser({ isPremium: profile.isPremium });
+
+      // Default to "not premium" when the profile fetch fails, so we never
+      // risk showing/uploading photos that should have stayed on-device.
+      const premium = Boolean(profile?.isPremium);
+      const useCloud = premium || !supportsLocalCheckInPhotos;
+
+      let images: string[] = [];
+      if (todayCheckInData) {
+        images = useCloud
+          ? todayCheckInData.images
+          : await getLocalCheckInPhotos(todayCheckInData.id);
+      }
+      setImageUris(images);
+      setSavedImages(images);
     } catch {
       // fail silently
     }
@@ -116,7 +151,7 @@ export default function HomeScreen() {
     } catch {
       // fail silently
     }
-  }, []);
+  }, [updateUser]);
 
   useFocusEffect(
     useCallback(() => {
@@ -139,11 +174,29 @@ export default function HomeScreen() {
     if (!mood) return;
     setSubmittingCheckIn(true);
     try {
-      await submitCheckIn(mood, note.trim() || undefined);
+      // Free tier: photos never leave the device, so nothing is uploaded
+      // and the check-in is created with no images at all.
+      const images =
+        useCloudPhotos && imageUris.length > 0
+          ? await uploadImages(imageUris)
+          : [];
+      const checkIn = await submitCheckIn(mood, note.trim() || undefined, images);
+
+      const displayImages =
+        !useCloudPhotos && imageUris.length > 0
+          ? await saveLocalCheckInPhotos(checkIn.id, imageUris)
+          : images;
+
       const streakData = await getStreak();
       setStreak(streakData.streak);
       setCheckedInToday(true);
-      Toast.show({ type: "success", text1: "Checked in! 🔥" });
+      setTodayCheckIn(checkIn);
+      setImageUris(displayImages);
+      setSavedImages(displayImages);
+      Toast.show({
+        type: "success",
+        text1: displayImages.length ? "Check-in and photos saved!" : "Checked in! 🔥",
+      });
     } catch (err: any) {
       Toast.show({
         type: "error",
@@ -151,6 +204,40 @@ export default function HomeScreen() {
       });
     } finally {
       setSubmittingCheckIn(false);
+    }
+  };
+
+  const handleSavePhotos = async () => {
+    if (!todayCheckIn) return;
+    setSavingPhotos(true);
+    try {
+      if (useCloudPhotos) {
+        const newLocalUris = imageUris.filter((uri) => !/^https?:\/\//.test(uri));
+        const uploadedUrls =
+          newLocalUris.length > 0 ? await uploadImages(newLocalUris) : [];
+        let uploadedIndex = 0;
+        const finalImages = imageUris.map((uri) =>
+          /^https?:\/\//.test(uri) ? uri : uploadedUrls[uploadedIndex++],
+        );
+        const updated = await updateCheckIn(todayCheckIn.id, {
+          images: finalImages,
+        });
+        setTodayCheckIn(updated);
+        setImageUris(updated.images);
+        setSavedImages(updated.images);
+      } else {
+        const finalImages = await saveLocalCheckInPhotos(todayCheckIn.id, imageUris);
+        setImageUris(finalImages);
+        setSavedImages(finalImages);
+      }
+      Toast.show({ type: "success", text1: "Photos updated!" });
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: err.message || "Could not save photos",
+      });
+    } finally {
+      setSavingPhotos(false);
     }
   };
 
@@ -209,6 +296,30 @@ export default function HomeScreen() {
       </LinearGradient>
 
       <View className="p-4">
+        <Pressable onPress={() => router.push("/(main)/face-scan")}>
+          <LinearGradient
+            colors={theme.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: 20, padding: 16, marginBottom: 16 }}
+            className="flex-row items-center gap-3"
+          >
+            <View
+              className="w-11 h-11 rounded-full items-center justify-center"
+              style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
+            >
+              <ScanFace size={22} color="#fff" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-white font-bold text-[15px]">Scan your face</Text>
+              <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12, marginTop: 2 }}>
+                Spot dark circles, spots & more — free tips in seconds
+              </Text>
+            </View>
+            <ChevronRight size={18} color="#fff" />
+          </LinearGradient>
+        </Pressable>
+
         {/* Daily check-in card */}
         {!checkedInToday ? (
           <Card
@@ -242,6 +353,17 @@ export default function HomeScreen() {
                   value={note}
                   onChangeText={setNote}
                 />
+                <ImagePickerRow
+                  uris={imageUris}
+                  onChange={setImageUris}
+                  theme={theme}
+                  label="Skin photos"
+                  helperText={
+                    useCloudPhotos
+                      ? "Add up to 6 progress photos, backed up to your account."
+                      : "Add up to 6 progress photos, kept only on this device. Go Premium to back them up."
+                  }
+                />
                 <Pressable
                   onPress={handleCheckIn}
                   disabled={submittingCheckIn}
@@ -253,7 +375,11 @@ export default function HomeScreen() {
                   }}
                 >
                   <Text className="text-white font-semibold text-sm">
-                    {submittingCheckIn ? "Saving..." : "Check in"}
+                    {submittingCheckIn
+                      ? imageUris.length
+                        ? "Uploading photos..."
+                        : "Saving..."
+                      : "Check in"}
                   </Text>
                 </Pressable>
               </>
@@ -261,18 +387,47 @@ export default function HomeScreen() {
           </Card>
         ) : (
           <Card
-            className="p-4 mb-4 items-center"
+            className="p-4 mb-4"
             style={{
               backgroundColor: theme.primaryLight,
               borderColor: theme.primary,
             }}
           >
             <Text
-              className="text-sm font-medium"
+              className="text-sm font-medium text-center"
               style={{ color: theme.foreground }}
             >
               ✓ Checked in today — {streak} day streak!
             </Text>
+
+            <ImagePickerRow
+              uris={imageUris}
+              onChange={setImageUris}
+              theme={theme}
+              label="Skin photos"
+              helperText={
+                useCloudPhotos
+                  ? "Add up to 6 progress photos, backed up to your account."
+                  : "Add up to 6 progress photos, kept only on this device. Go Premium to back them up."
+              }
+            />
+
+            {JSON.stringify(imageUris) !== JSON.stringify(savedImages) && (
+              <Pressable
+                onPress={handleSavePhotos}
+                disabled={savingPhotos}
+                className="rounded-xl py-3 items-center mt-3"
+                style={{
+                  backgroundColor: savingPhotos
+                    ? theme.primaryLight
+                    : theme.primary,
+                }}
+              >
+                <Text className="text-white font-semibold text-sm">
+                  {savingPhotos ? "Saving..." : "Save photos"}
+                </Text>
+              </Pressable>
+            )}
           </Card>
         )}
 

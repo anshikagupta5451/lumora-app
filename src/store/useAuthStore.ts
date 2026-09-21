@@ -21,6 +21,7 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  isPremium?: boolean;
 }
 
 interface AuthState {
@@ -34,7 +35,7 @@ interface AuthState {
   ) => Promise<void>;
   logout: () => Promise<void>;
   loadAuth: () => Promise<void>;
-  updateUser: (updates: Partial<{ name: string }>) => Promise<void>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({

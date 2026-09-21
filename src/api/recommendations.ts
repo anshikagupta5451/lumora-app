@@ -25,6 +25,31 @@ export function generateRecommendation(weather?: {
   });
 }
 
+export interface ScanRecommendation {
+  key: string;
+  label: string;
+  score: number;
+  freeTips: string[];
+  ownedMatch: { id: string; name: string; brand: string } | null;
+  suggestedProducts: {
+    id: string;
+    name: string;
+    brand: string;
+    price: number;
+    category: string;
+  }[];
+}
+
+export interface ScanRecommendationsResponse {
+  concerns: ScanRecommendation[];
+  budget: number | null;
+  generatedAt: string;
+}
+
+export function getRecommendationsFromScan() {
+  return apiFetch<ScanRecommendationsResponse>("/recommendations/from-scan");
+}
+
 export function submitRecommendationFeedback(
   recommendationId: string,
   helpful: boolean,

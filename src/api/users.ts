@@ -4,6 +4,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  isPremium: boolean;
 }
 
 export interface PublicProfile {
@@ -16,6 +17,10 @@ export interface PublicProfile {
 
 export function getPublicProfile(id: string) {
   return apiFetch<PublicProfile>(`/users/${id}/public`)
+}
+
+export function getMyProfile() {
+  return apiFetch<UserProfile>("/users/me");
 }
 
 export function updateMyProfile(name: string) {

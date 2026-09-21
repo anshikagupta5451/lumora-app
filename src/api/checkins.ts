@@ -4,6 +4,7 @@ export interface CheckIn {
   id: string;
   mood: number;
   note: string | null;
+  images: string[];
   createdAt: string;
 }
 
@@ -15,10 +16,10 @@ export interface UserStats {
   reviewsWritten: number;
 }
 
-export function submitCheckIn(mood: number, note?: string) {
+export function submitCheckIn(mood: number, note?: string, images: string[] = []) {
   return apiFetch<CheckIn>("/checkins", {
     method: "POST",
-    body: JSON.stringify({ mood, note }),
+    body: JSON.stringify({ mood, note, images }),
   });
 }
 
@@ -46,7 +47,7 @@ export function deleteCheckIn(id: string) {
 
 export function updateCheckIn(
   id: string,
-  updates: { mood?: number; note?: string },
+  updates: { mood?: number; note?: string; images?: string[] },
 ) {
   return apiFetch<CheckIn>(`/checkins/${id}`, {
     method: "PATCH",
