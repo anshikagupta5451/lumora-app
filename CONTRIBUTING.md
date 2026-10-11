@@ -70,7 +70,7 @@ Follow the surrounding code first. In short:
 - **Components** — named export, PascalCase file in `components/`; primitives in `components/ui/`.
 - **Text** — import `Text`/`TextInput` from `components/ui/Text`, never from `react-native`, or you lose the app font.
 - **Networking** — always through a `src/api/*.ts` module and `apiFetch`. No `fetch` in screens, no hardcoded URLs.
-- **State** — screen-local `useState`; zustand only for auth and onboarding. No new global stores without discussion.
+- **State** — screen-local `useState`; zustand only for auth, onboarding, and the one-shot scan/face-scan handoffs. No new global stores without discussion.
 - **Colors** — `useTheme()` + the `style` prop for anything that should follow the selected theme; NativeWind `className` for layout, spacing, and type. Tailwind's color classes are locked to the bloom palette.
 - **Forms** — React Hook Form with a Zod schema from `src/lib/validation/`.
 - **Imports** — relative paths; there's no alias configured.

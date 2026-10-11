@@ -2,18 +2,38 @@
 import React, { useEffect, useState } from 'react'
 import { Redirect } from 'expo-router'
 import { useAuthStore } from '../src/store/useAuthStore'
+import { getMySkinProfile } from '../src/api/skinProfile'
+
+type Target = 'login' | 'onboarding' | 'home' | null
 
 export default function Index() {
-  const [checked, setChecked] = useState(false)
-  const { isAuthenticated, loadAuth } = useAuthStore()
+  const [target, setTarget] = useState<Target>(null)
+  const { loadAuth } = useAuthStore()
 
   useEffect(() => {
-    loadAuth().finally(() => setChecked(true))
+    ;(async () => {
+      await loadAuth()
+
+      if (!useAuthStore.getState().isAuthenticated) {
+        setTarget('login')
+        return
+      }
+
+      // A user who signed up but never finished onboarding (closed the
+      // app mid-flow, lost connection, etc.) has no skin profile yet —
+      // send them back to pick up where they left off instead of
+      // dropping them on an empty home tab.
+      try {
+        await getMySkinProfile()
+        setTarget('home')
+      } catch (err: any) {
+        setTarget(err?.message === 'No skin profile yet' ? 'onboarding' : 'home')
+      }
+    })()
   }, [])
 
-  if (!checked) return null // or a splash/loading view
-
-  return isAuthenticated
-    ? <Redirect href="/(main)/(tabs)/home" />
-    : <Redirect href="/(auth)/login" />
+  if (target === 'login') return <Redirect href="/(auth)/login" />
+  if (target === 'onboarding') return <Redirect href="/(onboarding)/skin-type" />
+  if (target === 'home') return <Redirect href="/(main)/(tabs)/home" />
+  return null // or a splash/loading view
 }

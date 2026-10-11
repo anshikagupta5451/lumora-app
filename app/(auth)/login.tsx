@@ -15,11 +15,14 @@ import { loginSchema, LoginInput } from "../../src/lib/validation/auth";
 import { loginUser } from "../../src/api/auth";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useTheme } from "../../src/theme/ThemeContext";
+import { useGoogleSignIn } from "../../src/lib/useGoogleSignIn";
+import { GoogleIcon } from "../../components/ui/GoogleIcon";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const { signInWithGoogle, isLoading: isGoogleLoading } = useGoogleSignIn();
 
   const {
     control,
@@ -96,17 +99,21 @@ export default function LoginScreen() {
           }}
         >
           <Pressable
-            className="rounded-xl py-3 items-center mb-4"
-            style={{ borderWidth: 1, borderColor: theme.border }}
-            onPress={() =>
-              Toast.show({ type: "info", text1: "Google login coming soon!" })
-            }
+            className="flex-row items-center justify-center gap-2 rounded-xl py-3 mb-4"
+            style={{
+              borderWidth: 1,
+              borderColor: theme.border,
+              opacity: isGoogleLoading ? 0.6 : 1,
+            }}
+            onPress={signInWithGoogle}
+            disabled={isGoogleLoading}
           >
+            <GoogleIcon size={18} />
             <Text
               className="text-sm font-medium"
               style={{ color: theme.foreground }}
             >
-              G Continue with Google
+              {isGoogleLoading ? "Connecting..." : "Continue with Google"}
             </Text>
           </Pressable>
 
@@ -218,11 +225,7 @@ export default function LoginScreen() {
             >
               Create an account
             </Link>
-            <Pressable
-              onPress={() =>
-                Toast.show({ type: "info", text1: "Feature coming soon!" })
-              }
-            >
+            <Pressable onPress={() => router.push("/(auth)/forgot-password")}>
               <Text className="text-[13px]" style={{ color: theme.muted }}>
                 Forgot password?
               </Text>

@@ -22,6 +22,7 @@ interface User {
   email: string;
   name?: string;
   isPremium?: boolean;
+  avatarUrl?: string | null;
 }
 
 interface AuthState {

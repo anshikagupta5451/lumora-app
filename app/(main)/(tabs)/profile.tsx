@@ -12,6 +12,7 @@ import {
   Award,
   CalendarCheck,
   BookOpen,
+  ShieldCheck,
 } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
@@ -29,6 +30,7 @@ import Toast from "react-native-toast-message";
 import { Card } from "../../../components/ui/Card";
 import { getMySkinProfile } from "../../../src/api/skinProfile";
 import { getBounties } from "../../../src/api/bounties";
+import { getMyProfile } from "../../../src/api/users";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { CheckInRow, isToday } from "../../../components/CheckInJournal";
 import { iconColors } from "../../../src/theme/iconColors";
@@ -115,6 +117,7 @@ export default function ProfileScreen() {
   const [streak, setStreak] = useState(0);
   const [totalCheckIns, setTotalCheckIns] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<CheckIn[]>([]);
@@ -165,6 +168,9 @@ export default function ProfileScreen() {
       loadStreak();
       loadHistory();
       loadPoints();
+      getMyProfile()
+        .then((me) => setIsAdmin(Boolean(me.isAdmin)))
+        .catch(() => {});
     }, [loadProfile, loadStreak, loadHistory, loadPoints]),
   );
 
@@ -487,6 +493,15 @@ export default function ProfileScreen() {
           onPress={() => router.push("/(main)/my-posts")}
           theme={theme}
         />
+        {isAdmin && (
+          <MenuRow
+            icon={ShieldCheck}
+            color={iconColors.amber}
+            label="Admin · Product catalog"
+            onPress={() => router.push("/(main)/admin")}
+            theme={theme}
+          />
+        )}
       </Card>
 
       {/* Logout */}

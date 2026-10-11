@@ -11,8 +11,8 @@ import { getProductByBarcode } from '../../src/api/products'
 import { useScanStore } from '../../src/store/useScanStore'
 
 // When opened from inside "Add a product" or "Write a review", scanning
-// should hand the result back to that screen instead of always jumping to
-// the review flow (the default when launched from the quick-action sheet).
+// should hand the result back to that screen. Launched on its own (from the
+// quick-action sheet) it's the in-shop "Is this right for me?" check.
 type ReturnTo = 'add-my-product' | 'share-review'
 
 export default function ScanProductScreen() {
@@ -46,25 +46,23 @@ export default function ScanProductScreen() {
   const handleScan = async ({ data }: { data: string }) => {
     if (scanned || looking) return
     setScanned(true)
+    if (returnTo !== 'add-my-product' && returnTo !== 'share-review') {
+      // The check screen does the lookup itself, including products that
+      // are only in Open Beauty Facts and not in our catalog.
+      router.replace(`/(main)/product-check?code=${encodeURIComponent(data)}`)
+      return
+    }
     setLooking(true)
     try {
       const product = await getProductByBarcode(data)
       Toast.show({ type: 'success', text1: `Found ${product.name}` })
-      if (returnTo === 'add-my-product' || returnTo === 'share-review') {
-        // Hand the result back to the screen that pushed this one, rather
-        // than navigating to it fresh and leaving a duplicate on the stack.
-        useScanStore.getState().setScannedProduct(product)
-        router.back()
-      } else {
-        router.replace(`/(main)/share-review?productId=${product.id}`)
-      }
+      // Hand the result back to the screen that pushed this one, rather
+      // than navigating to it fresh and leaving a duplicate on the stack.
+      useScanStore.getState().setScannedProduct(product)
+      router.back()
     } catch {
       Toast.show({ type: 'info', text1: "Product not found — you can add it manually" })
-      if (returnTo === 'add-my-product' || returnTo === 'share-review') {
-        router.back()
-      } else {
-        router.replace('/(main)/add-my-product')
-      }
+      router.back()
     } finally {
       setLooking(false)
     }

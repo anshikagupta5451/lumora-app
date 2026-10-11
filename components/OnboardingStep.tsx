@@ -31,20 +31,29 @@ export function OnboardingStep({
   const { theme } = useTheme();
   return (
     <View
-      className="flex-1 bg-background p-6"
-      style={{ paddingBottom: insets.bottom + 16 }}
+      className="flex-1 p-6"
+      style={{
+        backgroundColor: theme.background,
+        paddingTop: insets.top + 16,
+        paddingBottom: insets.bottom + 16,
+      }}
     >
       <View className="flex-row gap-1.5 mb-6 mt-2">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <View
             key={i}
-            className={`flex-1 h-1.5 rounded-full ${i < step ? "bg-primary" : "bg-border"}`}
+            className="flex-1 h-1.5 rounded-full"
+            style={{ backgroundColor: i < step ? theme.primary : theme.border }}
           />
         ))}
       </View>
 
-      <Text className="text-2xl font-bold text-foreground">{title}</Text>
-      <Text className="text-sm text-muted mt-1 mb-6">{subtitle}</Text>
+      <Text className="text-2xl font-bold" style={{ color: theme.foreground }}>
+        {title}
+      </Text>
+      <Text className="text-sm mt-1 mb-6" style={{ color: theme.muted }}>
+        {subtitle}
+      </Text>
 
       <ScrollView
         className="flex-1"
@@ -58,15 +67,19 @@ export function OnboardingStep({
         {step > 1 && (
           <Pressable
             onPress={() => router.back()}
-            className="flex-1 border border-border rounded-xl py-3.5 items-center"
+            className="flex-1 rounded-xl py-3.5 items-center"
+            style={{ borderWidth: 1, borderColor: theme.border }}
           >
-            <Text className="text-foreground font-medium">Back</Text>
+            <Text className="font-medium" style={{ color: theme.foreground }}>
+              Back
+            </Text>
           </Pressable>
         )}
         <Pressable
           onPress={onNext}
           disabled={nextDisabled}
-          className={`flex-1 rounded-xl py-3.5 items-center ${nextDisabled ? "bg-primary/50" : "bg-primary"}`}
+          className="flex-1 rounded-xl py-3.5 items-center"
+          style={{ backgroundColor: nextDisabled ? theme.primaryLight : theme.primary }}
         >
           <Text className="text-white font-semibold">{nextLabel}</Text>
         </Pressable>

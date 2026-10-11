@@ -41,7 +41,7 @@ export default function EditProfileScreen() {
   return (
     <View
       className="flex-1 bg-background p-4"
-      style={{ paddingBottom: insets.bottom + 16 }}
+      style={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }}
     >
       <Pressable
         onPress={() => router.back()}

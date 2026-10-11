@@ -31,7 +31,7 @@ File-based, with `typedRoutes` enabled in [app.json](../app.json) — route stri
 | Group | Purpose |
 | --- | --- |
 | `app/index.tsx` | Entry gate. Calls `loadAuth()`, then redirects to `(main)/(tabs)/home` or `(auth)/login`. Renders `null` while checking. |
-| `app/(auth)/` | `login`, `signup` |
+| `app/(auth)/` | `login`, `signup`, `forgot-password` → `reset-password` (6-digit emailed code) |
 | `app/(onboarding)/` | `skin-type` → `concerns` → `sensitivities` → `goals`; the last step saves the profile |
 | `app/(main)/` | Everything post-auth. Stack with headers hidden. |
 | `app/(main)/(tabs)/` | Bottom tab bar |
@@ -61,6 +61,23 @@ Two things to know:
 
 Detail routes use dynamic segments: `post/[id]`, `product/[id]`, `user/[id]`.
 
+### Non-tab screens in `(main)`
+
+| Screen | Purpose |
+| --- | --- |
+| `face-scan`, `face-scan-results` | Selfie capture, then concern scores, markers and product suggestions |
+| `scan-product` | Barcode scanner. With `?returnTo=add-my-product` or `share-review` it hands the result back via `useScanStore`; otherwise it opens `product-check` |
+| `product-check` | "Is this right for me?" — the rule-based verdict for `?code=` from `/products/barcode/:code/check`. "I bought it" hands catalog products to `add-my-product` through `useScanStore` |
+| `product/[id]` | Product detail, with the same verdict from `/products/:id/verdict`. Both screens render it with `components/ProductVerdict.tsx` |
+| `add-my-product`, `my-products` | The user's shelf, including custom products not in the catalog |
+| `share-review` | Write a product review |
+| `routine-builder` | Create AM/PM routines |
+| `journal` | Check-in history with photos and notes |
+| `my-posts`, `my-stats` | The user's posts; stats and bounty points |
+| `edit-profile`, `settings` | Profile editing; theme and notification toggles |
+| `glossary` | Ingredient glossary |
+| `admin/`, `admin/product` | Catalog management for admins (server-checked against `ADMIN_EMAILS`) |
+
 ---
 
 ## 3. Data layer
@@ -87,21 +104,26 @@ One file per resource in `src/api/`, each exporting thin typed functions:
 
 | Module | Endpoints |
 | --- | --- |
-| `auth.ts` | `POST /auth/login`, `/auth/signup` |
-| `checkins.ts` | `/checkins`, `/checkins/today`, `/checkins/history`, `/checkins/stats` |
+| `admin.ts` | `/admin/categories`, `/admin/products` (CRUD), `/admin/lookup/barcode/:code`, `/admin/lookup/search?q=` |
+| `auth.ts` | `POST /auth/login`, `/auth/signup`, `/auth/google`, `/auth/forgot-password`, `/auth/reset-password` |
+| `bounties.ts` | `/bounties` |
+| `checkins.ts` | `/checkins` (create, `PATCH`/`DELETE /:id`), `/checkins/today`, `/checkins/history`, `/checkins/stats`, `/checkins/streak` |
 | `faceScan.ts` | `POST /face-scan/analyze`, `/face-scan/latest` |
 | `ingredients.ts` | `/ingredients`, `/ingredients/:name` |
-| `posts.ts` | `/posts`, `/posts/:id`, `/like`, `/bookmark`, `/comments`, `/posts/mine/all`, `/posts/bookmarked/all`, `POST /uploads/images` |
-| `products.ts` | `/products`, `/products/:id`, `/products/barcode/:code` |
-| `recommendations.ts` | `/recommendations/latest`, `/generate`, `/from-scan`, `/:id/feedback` |
+| `posts.ts` | `/posts`, `/posts/:id` (get, `DELETE`), `/like`, `/bookmark`, `/report`, `/comments`, `/posts/mine/all`, `/posts/bookmarked/all` |
+| `products.ts` | `/products`, `/products/:id`, `/products/:id/verdict`, `/products/barcode/:code`, `/products/barcode/:code/check` |
+| `recommendations.ts` | `/recommendations/latest`, `/generate`, `/from-scan?source=owned\|promoted\|web`, `/:id/feedback` |
 | `reviews.ts` | `/reviews` |
-| `routines.ts` | `/routines`, `/routines/me`, `/routine-steps/:id/log` |
+| `routines.ts` | `/routines`, `/routines/me`, `DELETE /routines/:id`, `/routine-steps/:id/log` |
 | `skinProfile.ts` | `/skin-profile`, `/skin-profile/me`, `PATCH /skin-profile/budget` |
+| `uploads.ts` | `POST /uploads/images` (multipart) |
 | `userProducts.ts` | `/user-products`, `/user-products/:id` |
-| `users.ts` | `/users/me`, `/users/:id/public`, `/users/push-token` |
+| `users.ts` | `/users/me` (get, `PATCH`), `/users/:id/public`, `/users/push-token` |
 | `weather.ts` | `/weather/current?lat=&lon=` |
 
-Image upload is the one multipart call: `uploadPostImages(uris)` in [src/api/posts.ts](../src/api/posts.ts) builds a `FormData` of local URIs and returns hosted URLs, which are then attached to the post.
+Image upload is the multipart call: [src/api/uploads.ts](../src/api/uploads.ts) builds a `FormData` of local URIs and returns hosted URLs (Supabase Storage), which are then attached to the post or check-in.
+
+The backend also serves `GET /products/popular`. **No client function calls it yet.**
 
 ---
 
@@ -112,6 +134,8 @@ Image upload is the one multipart call: `uploadPostImages(uris)` in [src/api/pos
 **`useAuthStore`** ([src/store/useAuthStore.ts](../src/store/useAuthStore.ts)) — `user`, `accessToken`, `isAuthenticated`, plus `setAuth` / `logout` / `loadAuth` / `updateUser`. Tokens and the serialized user go to `expo-secure-store` through a small wrapper that no-ops on web (SecureStore has no web implementation), so **web sessions do not persist**. `loadAuth()` rehydrates on cold start and is called once from `app/index.tsx`.
 
 **`useOnboardingStore`** ([src/store/useOnboardingStore.ts](../src/store/useOnboardingStore.ts)) — in-memory only. Accumulates skin type, concerns, sensitivities, and goals across the four steps; the final step posts them and calls `reset()`. Killing the app mid-onboarding loses the answers by design.
+
+**`useScanStore`** and **`useFaceScanStore`** — one-shot handoffs. The barcode scanner writes its result for the screen that pushed it (Add product / Write a review), and the face-scan screen hands its analysis to the results screen, so neither payload rides in a route param. The receiving screen clears the value once consumed.
 
 ### Everything else
 
@@ -159,9 +183,11 @@ Embedded weights are 400, 500, 600, 700, 800. A `fontWeight` outside that set fa
 | --- | --- | --- |
 | Location | [src/lib/location.ts](../src/lib/location.ts) | `getCurrentLocation()` requests foreground permission, returns `{lat, lon}` or `null`. Feeds the weather-based recommendation on the home screen. |
 | Push | [src/lib/notifications.ts](../src/lib/notifications.ts) | Requests permission, gets an Expo push token using the EAS `projectId` from `expo-constants`, creates the Android `default` channel, registers the token with the backend. Bails out on web, on simulators (`!Device.isDevice`), and when permission is denied. |
-| Camera | `app/(main)/scan-product.tsx` | `expo-camera` barcode scan → `/products/barcode/:code`. |
-| Camera | `app/(main)/face-scan.tsx` | `expo-camera` front-facing selfie against an oval guide → `/face-scan/analyze`. Backend does heuristic (non-ML) pixel analysis, see `lumora-backend/src/lib/faceAnalysis.ts`. |
-| Images | `expo-image-picker` → `uploadPostImages` | Post composer and review flows. |
+| Camera | `app/(main)/scan-product.tsx` | `expo-camera` barcode scan → `/products/barcode/:code` (handoff) or `product-check` (verdict). |
+| Camera | `app/(main)/face-scan.tsx` | `expo-camera` front-facing selfie against an oval guide → `/face-scan/analyze`. Backend tries Gemini vision first (`lumora-backend/src/lib/geminiVision.ts`) and falls back to heuristic pixel analysis (`faceAnalysis.ts`) when no key is set or the quota is spent. |
+| Images | `expo-image-picker` → `src/api/uploads.ts` | Post composer, review and check-in flows. |
+| Check-in photos | [src/lib/localCheckInPhotos.ts](../src/lib/localCheckInPhotos.ts) | Free-tier users' check-in photos are copied into app storage and indexed in AsyncStorage, never uploaded. Premium users (`user.isPremium`) and web go through the upload path. |
+| Google sign-in | [src/lib/googleAuth.ts](../src/lib/googleAuth.ts) | See [GOOGLE_SIGN_IN.md](GOOGLE_SIGN_IN.md). |
 | Secure storage | `useAuthStore`, `ThemeContext` | Tokens, user JSON, theme name. |
 
 ---
@@ -181,3 +207,6 @@ Embedded weights are 400, 500, 600, 700, 800. A `fontWeight` outside that set fa
 - `.gitignore` ignores `/android`, but a generated `android/` directory is present in the working tree (untracked).
 - Three `react-hooks/exhaustive-deps` warnings remain, all on deliberate mount-only effects.
 - No test setup exists.
+- The notification toggles in `settings.tsx` are local `useState` only — they aren't saved and don't affect what the backend sends.
+- The "Shared routines" link in `explore.tsx` is commented out; there is no `shared-routines` screen.
+- Backend `/products/popular` has no client caller yet.

@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { Text } from "../../../components/ui/Text";
 import { Card } from "../../../components/ui/Card";
-import { getProduct, Product } from "../../../src/api/products";
+import { ProductVerdict } from "../../../components/ProductVerdict";
+import { getProduct, getProductVerdict, Product, Verdict } from "../../../src/api/products";
 import { useTheme } from "../../../src/theme/ThemeContext";
 
 
@@ -13,6 +14,7 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -20,6 +22,10 @@ export default function ProductDetailScreen() {
       .then(setProduct)
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
+    // The verdict is extra: if it fails, the page still shows the product.
+    getProductVerdict(id)
+      .then((res) => setVerdict(res.verdict))
+      .catch(() => setVerdict(null));
   }, [id]);
 
   if (loading) {
@@ -64,6 +70,12 @@ export default function ProductDetailScreen() {
       <Text className="text-xl font-semibold text-primary mt-3">
         ₹{product.price}
       </Text>
+
+      {verdict ? (
+        <View className="mt-5">
+          <ProductVerdict verdict={verdict} />
+        </View>
+      ) : null}
 
       <Card className="p-4 mt-5">
         <Text className="text-sm font-semibold text-foreground mb-2">

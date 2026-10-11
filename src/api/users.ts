@@ -5,6 +5,7 @@ export interface UserProfile {
   name: string;
   email: string;
   isPremium: boolean;
+  isAdmin?: boolean;
 }
 
 export interface PublicProfile {

@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } f
 import { Text, TextInput } from "../../components/ui/Text";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ChevronLeft, ScanFace, Gift, PackageCheck, ChevronRight, Sparkles, Cpu } from "lucide-react-native";
+import { ChevronLeft, ScanFace, Sparkles, Cpu } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Card } from "../../components/ui/Card";
@@ -13,8 +13,15 @@ import { useFaceScanStore } from "../../src/store/useFaceScanStore";
 import { getLatestFaceScan, FaceScanResult } from "../../src/api/faceScan";
 import {
   getRecommendationsFromScan,
-  ScanRecommendation,
+  ScanRecommendationsResponse,
+  SuggestionSource,
 } from "../../src/api/recommendations";
+import {
+  SuggestionSourcePicker,
+  PlanSummary,
+  ConcernSuggestionCard,
+  WebSources,
+} from "../../components/ScanSuggestions";
 import { getMySkinProfile, updateMonthlyBudget } from "../../src/api/skinProfile";
 
 function ScoreBar({
@@ -211,21 +218,27 @@ export default function FaceScanResultsScreen() {
 
   const [scan, setScan] = useState<FaceScanResult | null>(useFaceScanStore((s) => s.latestScan));
   const [loadingScan, setLoadingScan] = useState(!scan);
-  const [recs, setRecs] = useState<ScanRecommendation[] | null>(null);
+  const [recs, setRecs] = useState<ScanRecommendationsResponse | null>(null);
+  const [source, setSource] = useState<SuggestionSource | null>(null);
   const [loadingRecs, setLoadingRecs] = useState(true);
-  const [budget, setBudget] = useState<number | null>(null);
+  const [recsError, setRecsError] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState("");
   const [savingBudget, setSavingBudget] = useState(false);
 
-  const loadRecs = useCallback(async () => {
+  // With no source the backend picks a sensible default (owned products
+  // if any fit, else Lumora picks) and tells us which it used.
+  const loadRecs = useCallback(async (nextSource?: SuggestionSource) => {
     setLoadingRecs(true);
+    setRecsError(null);
+    if (nextSource) setSource(nextSource);
     try {
-      const data = await getRecommendationsFromScan();
-      setRecs(data.concerns);
-      setBudget(data.budget);
+      const data = await getRecommendationsFromScan(nextSource);
+      setRecs(data);
+      setSource(data.source);
       setBudgetInput(data.budget ? String(data.budget) : "");
     } catch (err: any) {
-      Toast.show({ type: "error", text1: err.message || "Could not load suggestions" });
+      setRecs(null);
+      setRecsError(err.message || "Could not load suggestions");
     } finally {
       setLoadingRecs(false);
     }
@@ -257,7 +270,6 @@ export default function FaceScanResultsScreen() {
     getMySkinProfile()
       .then((profile: any) => {
         if (typeof profile?.monthlyBudget === "number") {
-          setBudget(profile.monthlyBudget);
           setBudgetInput(String(profile.monthlyBudget));
         }
       })
@@ -274,7 +286,7 @@ export default function FaceScanResultsScreen() {
     try {
       await updateMonthlyBudget(value);
       Toast.show({ type: "success", text1: "Budget saved" });
-      await loadRecs();
+      await loadRecs(source ?? undefined);
     } catch (err: any) {
       Toast.show({ type: "error", text1: err.message || "Could not save budget" });
     } finally {
@@ -393,83 +405,54 @@ export default function FaceScanResultsScreen() {
           </View>
         </Card>
 
-        <View
-          className="rounded-xl p-3 mb-4 flex-row items-start gap-2"
-          style={{ backgroundColor: theme.primaryLight }}
-        >
-          <Gift size={16} color={theme.primary} style={{ marginTop: 1 }} />
-          <Text className="text-xs flex-1 leading-4" style={{ color: theme.foreground }}>
-            Lumora isn&apos;t selling products yet, so everything below is either free advice or a
-            free-to-browse catalog match — no purchases, no cost.
-          </Text>
-        </View>
+        {sortedConcerns.some((c) => c.detected) && (
+          <Card className="p-4 mb-4" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
+            <SuggestionSourcePicker
+              value={source ?? "promoted"}
+              onChange={(next) => next !== source && loadRecs(next)}
+              disabled={loadingRecs}
+            />
+          </Card>
+        )}
 
         {loadingRecs ? (
           <View className="items-center py-8">
             <ActivityIndicator color={theme.primary} />
+            {source === "web" && (
+              <Text className="text-xs mt-3" style={{ color: theme.muted }}>
+                Searching for products that fit your budget…
+              </Text>
+            )}
           </View>
-        ) : !recs || recs.length === 0 ? (
+        ) : recsError ? (
+          <Card className="p-4 items-center" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
+            <Text className="text-sm text-center" style={{ color: theme.muted }}>
+              {recsError}
+            </Text>
+            <Pressable
+              onPress={() => loadRecs(source ?? undefined)}
+              className="mt-3 rounded-lg px-4 py-2"
+              style={{ backgroundColor: theme.primaryLight }}
+            >
+              <Text className="text-xs font-medium" style={{ color: theme.primary }}>
+                Try again
+              </Text>
+            </Pressable>
+          </Card>
+        ) : !recs || recs.concerns.length === 0 ? (
           <Card className="p-4 items-center" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
             <Text className="text-sm text-center" style={{ color: theme.muted }}>
               No strong concerns detected — keep up your routine and scan again in a few weeks.
             </Text>
           </Card>
         ) : (
-          recs.map((rec) => (
-            <Card key={rec.key} className="p-4 mb-4" style={{ backgroundColor: theme.card, borderColor: theme.border }}>
-              <Text className="text-base font-semibold mb-2" style={{ color: theme.foreground }}>
-                {rec.label}
-              </Text>
-
-              <Text className="text-xs font-semibold mb-1.5" style={{ color: iconColors.green }}>
-                FREE THINGS TO TRY
-              </Text>
-              {rec.freeTips.map((tip, i) => (
-                <View key={i} className="flex-row gap-2 mb-1.5">
-                  <Text style={{ color: theme.muted }}>{"•"}</Text>
-                  <Text className="text-sm flex-1 leading-5" style={{ color: theme.muted }}>{tip}</Text>
-                </View>
-              ))}
-
-              {rec.ownedMatch && (
-                <View
-                  className="flex-row items-center gap-2 rounded-xl p-3 mt-3"
-                  style={{ backgroundColor: `${iconColors.teal}18`, borderWidth: 1, borderColor: iconColors.teal }}
-                >
-                  <PackageCheck size={16} color={iconColors.teal} />
-                  <Text className="text-xs flex-1" style={{ color: theme.foreground }}>
-                    You already have{" "}
-                    <Text className="font-semibold">{rec.ownedMatch.name}</Text> — try using it
-                    consistently for this.
-                  </Text>
-                </View>
-              )}
-
-              {rec.suggestedProducts.length > 0 && (
-                <View className="mt-3">
-                  <Text className="text-xs font-semibold mb-1.5" style={{ color: theme.muted }}>
-                    IN THE CATALOG {budget ? `(within ₹${budget} budget)` : ""}
-                  </Text>
-                  {rec.suggestedProducts.map((p) => (
-                    <Pressable
-                      key={p.id}
-                      onPress={() => router.push(`/(main)/product/${p.id}`)}
-                      className="flex-row items-center justify-between rounded-xl p-3 mb-2"
-                      style={{ borderWidth: 1, borderColor: theme.border }}
-                    >
-                      <View className="flex-1">
-                        <Text className="text-sm font-medium" style={{ color: theme.foreground }}>{p.name}</Text>
-                        <Text className="text-xs mt-0.5" style={{ color: theme.muted }}>
-                          {p.brand} · ₹{p.price}
-                        </Text>
-                      </View>
-                      <ChevronRight size={16} color={theme.muted} />
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </Card>
-          ))
+          <>
+            <PlanSummary data={recs} />
+            {recs.concerns.map((rec) => (
+              <ConcernSuggestionCard key={rec.key} rec={rec} />
+            ))}
+            <WebSources data={recs} />
+          </>
         )}
       </View>
     </ScrollView>

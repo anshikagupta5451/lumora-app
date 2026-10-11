@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card } from "../../../components/ui/Card";
 import { MoodPicker } from "../../../components/MoodPicker";
 import { ImagePickerRow } from "../../../components/ImagePickerRow";
+import { DailyBrief } from "../../../components/DailyBrief";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useTheme } from "../../../src/theme/ThemeContext";
 import {
@@ -59,6 +60,7 @@ export default function HomeScreen() {
   const [recommendation, setRecommendation] =
     useState<RecommendationResponse | null>(null);
   const [loadingRec, setLoadingRec] = useState(true);
+  const [recError, setRecError] = useState<string | null>(null);
   const [feedbackGiven, setFeedbackGiven] = useState<
     "helpful" | "not_helpful" | null
   >(null);
@@ -79,38 +81,39 @@ export default function HomeScreen() {
 
   const { theme } = useTheme();
 
+  // Each section loads independently so a slow one (location + live
+  // conditions for the brief) never holds up the others.
   const loadAll = useCallback(async () => {
     setLoadingRec(true);
+    setRecError(null);
 
-    let currentWeather: WeatherData | null = null;
-    try {
-      const loc = await getCurrentLocation();
-      if (loc) {
-        currentWeather = await getCurrentWeather(loc.lat, loc.lon);
-        setWeather(currentWeather);
-      }
-    } catch {
-      // weather is nice-to-have, not critical
-    }
+    // Shared by the weather card and the brief so location is asked once.
+    const locationPromise = getCurrentLocation().catch(() => null);
 
-    try {
-      let rec: RecommendationResponse;
+    const loadWeather = async () => {
+      const loc = await locationPromise;
+      if (loc) setWeather(await getCurrentWeather(loc.lat, loc.lon));
+    };
+
+    const loadBrief = async () => {
       try {
-        rec = await getLatestRecommendation();
-      } catch {
-        rec = await generateRecommendation(currentWeather || undefined);
+        let rec: RecommendationResponse;
+        try {
+          rec = await getLatestRecommendation();
+        } catch {
+          // Only a new brief needs coordinates — today's saved one doesn't.
+          rec = await generateRecommendation((await locationPromise) || undefined);
+        }
+        setRecommendation(rec);
+      } catch (err: any) {
+        setRecommendation(null);
+        setRecError(err.message || "Could not load your brief");
+      } finally {
+        setLoadingRec(false);
       }
-      setRecommendation(rec);
-    } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: err.message || "Could not load your brief",
-      });
-    } finally {
-      setLoadingRec(false);
-    }
+    };
 
-    try {
+    const loadCheckIn = async () => {
       const [streakData, todayCheckInData, profile] = await Promise.all([
         getStreak(),
         getTodayCheckIn(),
@@ -134,23 +137,26 @@ export default function HomeScreen() {
       }
       setImageUris(images);
       setSavedImages(images);
-    } catch {
-      // fail silently
-    }
+    };
 
-    try {
+    const loadBounties = async () => {
       const bountiesData = await getBounties();
       setBounties(bountiesData.bounties);
       setBountyPoints(bountiesData.totalPoints);
-    } catch {
-      // fail silently
-    }
+    };
 
-    try {
+    const loadRoutines = async () => {
       setRoutines(await getMyRoutines());
-    } catch {
-      // fail silently
-    }
+    };
+
+    // Everything but the brief is nice-to-have and fails silently.
+    await Promise.allSettled([
+      loadWeather(),
+      loadBrief(),
+      loadCheckIn(),
+      loadBounties(),
+      loadRoutines(),
+    ]);
   }, [updateUser]);
 
   useFocusEffect(
@@ -630,61 +636,43 @@ export default function HomeScreen() {
         )}
 
         {/* Main recommendation */}
-        {loadingRec ? (
+        {loadingRec && !recommendation ? (
           <Card
-            className="p-4 items-center py-8"
+            className="mt-4 p-4 items-center py-8"
             style={{ backgroundColor: theme.card, borderColor: theme.border }}
           >
             <ActivityIndicator color={theme.primary} />
           </Card>
         ) : !recommendation ? (
           <Card
-            className="p-4 items-center"
+            className="mt-4 p-4 items-center"
             style={{ backgroundColor: theme.card, borderColor: theme.border }}
           >
             <Text
               className="text-sm text-center"
               style={{ color: theme.muted }}
             >
-              Complete your skin assessment to get your first recommendation.
+              {recError ?? "Couldn't load today's brief."}
             </Text>
+            <Pressable
+              onPress={loadAll}
+              className="mt-3 rounded-lg px-4 py-2"
+              style={{ backgroundColor: theme.primaryLight }}
+            >
+              <Text
+                className="text-xs font-medium"
+                style={{ color: theme.primary }}
+              >
+                Retry
+              </Text>
+            </Pressable>
           </Card>
         ) : (
           <Card
-            className="p-4"
+            className="mt-4 p-4"
             style={{ backgroundColor: theme.card, borderColor: theme.border }}
           >
-            <Text
-              className="text-xs font-medium mb-1"
-              style={{ color: theme.primary }}
-            >
-              TODAY&apos;S RECOMMENDATION
-            </Text>
-            <Text
-              className="text-lg font-semibold"
-              style={{ color: theme.foreground }}
-            >
-              {recommendation.productName}
-            </Text>
-            <Text
-              className="text-[14px] uppercase mt-0.5"
-              style={{ color: theme.muted }}
-            >
-              {recommendation.brand}
-            </Text>
-            <Text
-              className="text-sm mt-3 leading-5"
-              style={{ color: theme.muted }}
-            >
-              {recommendation.reason}
-            </Text>
-
-            {recommendation.weatherUsed && (
-              <Text className="text-[13px] mt-2" style={{ color: theme.muted }}>
-                Generated using {recommendation.weatherUsed.temp}°C,{" "}
-                {recommendation.weatherUsed.humidity}% humidity
-              </Text>
-            )}
+            <DailyBrief brief={recommendation} />
 
             {feedbackGiven ? (
               <View

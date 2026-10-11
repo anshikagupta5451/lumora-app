@@ -1,10 +1,13 @@
 import {
+  ChevronRight,
+  ScanLine,
   Search,
   SlidersHorizontal,
   Sparkles,
   X,
   PenSquare,
 } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -160,6 +163,33 @@ export default function ExploreScreen() {
           >
             📖 Ingredient Glossary
           </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/(main)/product-scanner")}
+          className="mt-4"
+          style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
+        >
+          <LinearGradient
+            colors={theme.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: 20, padding: 16, flexDirection: "row", alignItems: "center", gap: 14 }}
+          >
+            <View
+              className="w-12 h-12 rounded-2xl items-center justify-center"
+              style={{ backgroundColor: "rgba(255,255,255,0.22)" }}
+            >
+              <ScanLine size={24} color="#fff" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-bold text-white">Scan a product</Text>
+              <Text className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.88)" }}>
+                Snap the front of any product to see if it&apos;s right for your skin
+              </Text>
+            </View>
+            <ChevronRight size={20} color="#fff" />
+          </LinearGradient>
         </Pressable>
 
         {/* <Pressable

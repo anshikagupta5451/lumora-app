@@ -56,7 +56,7 @@ function QuickActionSheet({ visible, onClose, theme }: any) {
       color: iconColors.pink,
     },
     {
-      label: "Scan a product",
+      label: "Is this right for me?",
       route: "/(main)/scan-product",
       icon: ScanLine,
       color: iconColors.purple,
