@@ -110,9 +110,10 @@ components/           shared components; components/ui/ holds primitives
   ui/Text.tsx         Text + TextInput that apply the app font — import these
 src/api/              one module per backend resource, all via apiFetch
 src/store/            zustand stores (auth, onboarding, scan and face-scan handoff)
-src/theme/            palettes, ThemeContext, typography
+src/theme/            palettes, ThemeContext, icon colors
 src/lib/              location, notifications, Google sign-in, local check-in photos, zod schemas
-constants/, hooks/    Expo template leftovers (theme colors, color scheme)
+docs/                 architecture and Google sign-in setup
+.claude/agents/       Claude Code subagents for this repo (see ../README.md)
 ```
 
 ## Builds and releases

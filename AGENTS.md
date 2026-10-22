@@ -21,6 +21,8 @@ This project is on **Expo SDK 54 / React Native 0.81 / React 19 / expo-router 6*
 | What the app does, how to run it | [README.md](README.md) |
 | Routing, data flow, state, theming | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Branching, commits, checks | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Backend contract, AI-feature rules, secrets | [../AGENTS.md](../AGENTS.md) |
+| Review before committing | the `app-reviewer` subagent in [.claude/agents/](.claude/agents/app-reviewer.md) |
 
 ## 3. Rules that are easy to get wrong
 
