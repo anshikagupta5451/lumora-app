@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
-import React, { useState } from "react";
-import { Pressable, Switch, View } from "react-native";
+import React from "react";
+import { Pressable, View } from "react-native";
 import { Text } from "../../components/ui/Text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card } from "../../components/ui/Card";
@@ -9,49 +9,9 @@ import { useTheme } from "../../src/theme/ThemeContext";
 import { palettes } from "../../src/theme/palettes";
 import { LinearGradient } from "expo-linear-gradient";
 
-function SettingRow({
-  label,
-  sub,
-  value,
-  onChange,
-  theme,
-}: {
-  label: string;
-  sub?: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-  theme: any;
-}) {
-  return (
-    <View className="flex-row items-center justify-between py-3">
-      <View className="flex-1 pr-3">
-        <Text
-          className="text-sm font-medium"
-          style={{ color: theme.foreground }}
-        >
-          {label}
-        </Text>
-        {sub && (
-          <Text className="text-xs mt-0.5" style={{ color: theme.muted }}>
-            {sub}
-          </Text>
-        )}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ true: theme.primary }}
-      />
-    </View>
-  );
-}
-
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [dailyBrief, setDailyBrief] = useState(true);
-  const [routineReminders, setRoutineReminders] = useState(true);
-  const [refillReminders, setRefillReminders] = useState(false);
   const { themeName, setThemeName, theme } = useTheme();
 
   return (
@@ -134,33 +94,16 @@ export default function SettingsScreen() {
         >
           Notifications
         </Text>
-        <SettingRow
-          label="Daily AI Beauty Brief"
-          sub="Get notified when today's brief is ready"
-          value={dailyBrief}
-          onChange={setDailyBrief}
-          theme={theme}
-        />
-        <SettingRow
-          label="Routine reminders"
-          sub="Morning & evening routine nudges"
-          value={routineReminders}
-          onChange={setRoutineReminders}
-          theme={theme}
-        />
-        <SettingRow
-          label="Refill reminders"
-          sub="When a product is running low"
-          value={refillReminders}
-          onChange={setRefillReminders}
-          theme={theme}
-        />
+        <Text className="text-sm font-medium" style={{ color: theme.foreground }}>
+          Streak reminder
+        </Text>
+        <Text className="text-xs mt-0.5" style={{ color: theme.muted }}>
+          If you haven&apos;t checked in by 8 pm, we&apos;ll send one nudge so
+          your streak doesn&apos;t break. You can turn it off in your
+          phone&apos;s notification settings for Lumora.
+        </Text>
       </Card>
 
-      <Text className="text-xs text-center mt-2" style={{ color: theme.muted }}>
-        Notification delivery isn&apos;t wired up yet — these preferences are
-        saved locally for now.
-      </Text>
     </View>
   );
 }

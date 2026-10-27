@@ -34,6 +34,8 @@ interface AuthState {
     accessToken: string,
     refreshToken: string,
   ) => Promise<void>;
+  setTokens: (accessToken: string, refreshToken: string) => Promise<void>;
+  getRefreshToken: () => Promise<string | null>;
   logout: () => Promise<void>;
   loadAuth: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
@@ -50,6 +52,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await storage.setItem("user", JSON.stringify(user));
     set({ user, accessToken, isAuthenticated: true });
   },
+
+  setTokens: async (accessToken, refreshToken) => {
+    await storage.setItem("accessToken", accessToken);
+    await storage.setItem("refreshToken", refreshToken);
+    set({ accessToken });
+  },
+
+  getRefreshToken: () => storage.getItem("refreshToken"),
 
   logout: async () => {
     await storage.deleteItem("accessToken");

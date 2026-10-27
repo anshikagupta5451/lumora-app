@@ -4,6 +4,7 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
+  Star,
   X,
   PenSquare,
 } from "lucide-react-native";
@@ -23,6 +24,10 @@ import { FilterChip } from "../../../components/FilterChip";
 import { ReviewCard } from "../../../components/ReviewCard";
 import { Card } from "../../../components/ui/Card";
 import { getReviews, Review } from "../../../src/api/reviews";
+import {
+  getPopularProducts,
+  PopularProduct,
+} from "../../../src/api/products";
 import { useTheme } from "../../../src/theme/ThemeContext";
 
 const skinOptions = ["Oily", "Dry", "Normal", "Combo", "Sensitive"];
@@ -48,6 +53,7 @@ export default function ExploreScreen() {
   const { theme } = useTheme();
 
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [popular, setPopular] = useState<PopularProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -63,6 +69,10 @@ export default function ExploreScreen() {
       .then((data) => setReviews(data))
       .catch((e) => setFetchError(e.message || "Failed to load reviews"))
       .finally(() => setLoading(false));
+    // Optional extra: if it fails, the row just doesn't show.
+    getPopularProducts()
+      .then(setPopular)
+      .catch(() => setPopular([]));
   }, []);
 
   const toggle = (
@@ -339,6 +349,64 @@ export default function ExploreScreen() {
             paddingBottom: insets.bottom + 24,
           }}
         >
+          {popular.length > 0 && !search.trim() && activeFilterCount === 0 && (
+            <View className="mb-3">
+              <Text
+                className="text-xs font-semibold uppercase mb-2"
+                style={{ color: theme.muted }}
+              >
+                Popular in the community
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 10 }}
+              >
+                {popular.map((p) => (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => router.push(`/(main)/product/${p.id}`)}
+                    className="rounded-2xl p-3"
+                    style={{
+                      width: 160,
+                      backgroundColor: theme.card,
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                    }}
+                  >
+                    <Text
+                      className="text-[11px] uppercase"
+                      style={{ color: theme.muted }}
+                      numberOfLines={1}
+                    >
+                      {p.brand}
+                    </Text>
+                    <Text
+                      className="text-sm font-semibold mt-0.5"
+                      style={{ color: theme.foreground }}
+                      numberOfLines={2}
+                    >
+                      {p.name}
+                    </Text>
+                    <View className="flex-row items-center gap-1 mt-2">
+                      <Star size={12} color={theme.primary} fill={theme.primary} />
+                      <Text className="text-xs" style={{ color: theme.foreground }}>
+                        {p.avgRating ?? "–"}
+                      </Text>
+                      <Text className="text-xs" style={{ color: theme.muted }}>
+                        · {p.reviewCount} {p.reviewCount === 1 ? "review" : "reviews"}
+                      </Text>
+                    </View>
+                    {p.price != null && (
+                      <Text className="text-xs mt-1" style={{ color: theme.muted }}>
+                        ₹{p.price}
+                      </Text>
+                    )}
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
           {filtered.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}

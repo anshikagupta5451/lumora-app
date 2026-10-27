@@ -18,6 +18,22 @@ export function getProducts(params?: { category?: string; query?: string }) {
   return apiFetch<Product[]>(`/products${qs ? `?${qs}` : ""}`);
 }
 
+export interface PopularProduct {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  price: number | null;
+  imageUrl: string | null;
+  reviewCount: number;
+  avgRating: number | null;
+}
+
+// Most-reviewed products with their average rating.
+export function getPopularProducts() {
+  return apiFetch<PopularProduct[]>("/products/popular");
+}
+
 export function getProduct(id: string) {
   return apiFetch<Product>(`/products/${id}`);
 }
