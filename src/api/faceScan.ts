@@ -26,8 +26,11 @@ export interface FaceScanResult {
   createdAt: string;
 }
 
-export async function analyzeFaceScan(uri: string): Promise<FaceScanResult> {
+// previewAspect: the camera preview's width / height, so the backend can
+// find where the on-screen oval guide falls in the photo and crop to it.
+export async function analyzeFaceScan(uri: string, previewAspect?: number): Promise<FaceScanResult> {
   const formData = new FormData();
+  if (previewAspect) formData.append("previewAspect", String(previewAspect));
 
   if (Platform.OS === "web") {
     const res = await fetch(uri);

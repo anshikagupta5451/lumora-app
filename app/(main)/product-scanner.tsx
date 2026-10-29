@@ -50,6 +50,8 @@ export default function ProductScannerScreen() {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [phase, setPhase] = useState<Phase>("camera");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  // What was read off the pack (or typed), for the AI lookup when nothing matches.
+  const [readText, setReadText] = useState("");
   const [matches, setMatches] = useState<ProductMatch[]>([]);
   const [searching, setSearching] = useState(false);
   const [torch, setTorch] = useState(false);
@@ -93,7 +95,13 @@ export default function ProductScannerScreen() {
   const reset = () => {
     setPhase("camera");
     setPhotoUri(null);
+    setReadText("");
     setMatches([]);
+  };
+
+  // Not in our catalog or Open Beauty Facts: let the AI identify it.
+  const identify = (text: string) => {
+    if (text.trim()) router.push(`/(main)/product-check?q=${encodeURIComponent(text)}`);
   };
 
   const analyze = async (uri: string) => {
@@ -107,10 +115,19 @@ export default function ProductScannerScreen() {
         setPhase("results");
         return;
       }
+      // Biggest text first: that's usually the brand and product name.
+      const text = [...lines]
+        .sort((a, b) => b.size - a.size)
+        .slice(0, 12)
+        .map((l) => l.text)
+        .join("\n")
+        .slice(0, 300);
+      setReadText(text);
       setPhase("matching");
       const res = await matchProducts({ lines });
       setMatches(res.matches);
       setPhase("results");
+      if (!res.matches.length) identify(text);
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
       Toast.show({
@@ -142,6 +159,7 @@ export default function ProductScannerScreen() {
 
   const search = async (query: string) => {
     setSearching(true);
+    setReadText(query);
     try {
       const res = await matchProducts({ query });
       setMatches(res.matches);
@@ -200,6 +218,7 @@ export default function ProductScannerScreen() {
             onSelect={select}
             onSearch={search}
             onAddMissing={() => router.push("/(main)/add-my-product")}
+            onIdentify={readText ? () => identify(readText) : undefined}
             onClose={reset}
           />
         ) : null}
@@ -390,6 +409,7 @@ export default function ProductScannerScreen() {
           onSelect={select}
           onSearch={search}
           onAddMissing={() => router.push("/(main)/add-my-product")}
+          onIdentify={readText ? () => identify(readText) : undefined}
           onClose={reset}
         />
       ) : null}

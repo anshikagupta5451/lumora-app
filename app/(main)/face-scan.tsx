@@ -22,9 +22,9 @@ export default function FaceScanScreen() {
   const [capturing, setCapturing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
 
-  // The oval guide's on-screen proportions are what the backend's
-  // fixed analysis regions (src/lib/faceAnalysis.ts on the server)
-  // assume a well-aligned face lands at — keep the two in sync if this
+  // The backend crops the photo to this oval (ovalCropRect in
+  // src/lib/faceAnalysis.ts on the server) using these same proportions
+  // and the screen's width / height — keep the two in sync if this
   // changes.
   const ovalWidth = width * 0.64;
   const ovalHeight = ovalWidth * 1.35;
@@ -69,7 +69,7 @@ export default function FaceScanScreen() {
     if (!photoUri) return;
     setAnalyzing(true);
     try {
-      const result = await analyzeFaceScan(photoUri);
+      const result = await analyzeFaceScan(photoUri, width / height);
       useFaceScanStore.getState().setLatestScan(result);
       router.replace("/(main)/face-scan-results");
     } catch (err: any) {
