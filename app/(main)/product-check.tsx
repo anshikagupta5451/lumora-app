@@ -6,12 +6,14 @@ import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProductVerdict } from "../../components/ProductVerdict";
 import { Text } from "../../components/ui/Text";
-import { BarcodeCheck, checkBarcode } from "../../src/api/products";
+import { BarcodeCheck, checkBarcode, identifyProduct } from "../../src/api/products";
 import { useScanStore } from "../../src/store/useScanStore";
 import { useTheme } from "../../src/theme/ThemeContext";
 
+// Opened with `code` (a scanned barcode) or `q` (text read off a pack the
+// photo scanner couldn't match, which the AI then identifies).
 export default function ProductCheckScreen() {
-  const { code } = useLocalSearchParams<{ code: string }>();
+  const { code, q } = useLocalSearchParams<{ code?: string; q?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
@@ -20,13 +22,13 @@ export default function ProductCheckScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkBarcode(code)
+    (code ? checkBarcode(code) : identifyProduct(q ?? ""))
       .then(setResult)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [code]);
+  }, [code, q]);
 
-  const scanAgain = () => router.replace("/(main)/scan-product");
+  const scanAgain = () => router.replace(code ? "/(main)/scan-product" : "/(main)/product-scanner");
 
   const backButton = (
     <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 mb-4">
@@ -45,7 +47,7 @@ export default function ProductCheckScreen() {
       >
         <ActivityIndicator color={theme.primary} />
         <Text className="text-sm" style={{ color: theme.muted }}>
-          Checking this against your skin…
+          {code ? "Checking this against your skin…" : "Identifying the product…"}
         </Text>
       </View>
     );
@@ -150,6 +152,17 @@ export default function ProductCheckScreen() {
         <Text className="text-xs mt-3" style={{ color: theme.muted }}>
           This product isn&apos;t in Lumora&apos;s catalog yet, so its details come from Open
           Beauty Facts and may be incomplete.
+        </Text>
+      ) : null}
+      {result.source === "ai" ? (
+        <Text className="text-xs mt-3" style={{ color: theme.muted }}>
+          This product isn&apos;t in Lumora&apos;s catalog yet. AI identified it and found its
+          ingredient list
+          {result.sources?.length
+            ? ` on ${result.sources.map((s) => s.title).filter(Boolean).slice(0, 2).join(" and ")}`
+            : ""}
+          ; the match above is worked out from that list by Lumora&apos;s rules. Check the label
+          on the pack to confirm.
         </Text>
       ) : null}
 

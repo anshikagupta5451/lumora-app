@@ -51,15 +51,26 @@ export interface VerdictCheck {
   detail: string;
 }
 
+export interface ConcernFit {
+  label: string;
+  // null when the ingredient list is unknown
+  percent: number | null;
+  fromScan: boolean;
+  reason: string;
+}
+
 export interface Verdict {
   overall: "great" | "good" | "caution" | "avoid" | "unknown";
   headline: string;
   checks: VerdictCheck[];
+  // 0–100, or null without a skin profile or ingredient list.
+  match: { percent: number | null; concerns: ConcernFit[] };
 }
 
-// Products found only in Open Beauty Facts have no id or price yet.
+// Products not in our catalog have no id or price. "ai" means the AI
+// identified the product and found its ingredients on the web.
 export interface BarcodeCheck {
-  source: "catalog" | "openbeautyfacts";
+  source: "catalog" | "openbeautyfacts" | "ai";
   product: {
     id: string | null;
     name: string;
@@ -70,11 +81,22 @@ export interface BarcodeCheck {
     imageUrl: string | null;
   };
   verdict: Verdict;
+  // Web pages the AI found the ingredients on (catalog results have none).
+  sources?: { title: string; url: string }[];
 }
 
 // The in-shop "Is this right for me?" check for a scanned barcode.
 export function checkBarcode(code: string) {
   return apiFetch<BarcodeCheck>(`/products/barcode/${encodeURIComponent(code)}/check`);
+}
+
+// The same check for a product the photo scanner couldn't match, from the
+// text read off its pack (or a typed name). The AI identifies it.
+export function identifyProduct(query: string) {
+  return apiFetch<BarcodeCheck>("/products/identify", {
+    method: "POST",
+    body: JSON.stringify({ query }),
+  });
 }
 
 export interface ProductMatch {

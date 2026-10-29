@@ -5,6 +5,7 @@ import {
   PackagePlus,
   Search,
   SearchX,
+  Sparkles,
   Star,
   X,
 } from "lucide-react-native";
@@ -167,6 +168,7 @@ export function ProductMatchSheet({
   onSelect,
   onSearch,
   onAddMissing,
+  onIdentify,
   onClose,
 }: {
   matches: ProductMatch[];
@@ -175,6 +177,9 @@ export function ProductMatchSheet({
   onSelect: (match: ProductMatch) => void;
   onSearch: (query: string) => void;
   onAddMissing: () => void;
+  // Asks the AI to identify the product from what was read; absent when
+  // nothing was read.
+  onIdentify?: () => void;
   onClose: () => void;
 }) {
   const { theme } = useTheme();
@@ -290,6 +295,9 @@ export function ProductMatchSheet({
             active={showSimilar}
             onPress={() => setShowSimilar((s) => !s)}
           />
+        ) : null}
+        {onIdentify ? (
+          <ActionTile icon={Sparkles} title="Ask AI" sub="to identify it" onPress={onIdentify} />
         ) : null}
         <ActionTile
           icon={Search}
